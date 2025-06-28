@@ -1,9 +1,7 @@
-import 'ant-design-vue/es/radio/style/index.less'
-import 'ant-design-vue/es/checkbox/style/index.less'
+import * as VueTypes from 'vue-types'
+import { computed, defineComponent } from 'vue'
 import Checkbox from 'ant-design-vue/es/checkbox'
 import Radio from 'ant-design-vue/es/radio'
-import { computed, defineComponent } from 'vue'
-import * as VueTypes from 'vue-types'
 
 export const STableSelection = defineComponent({
   name: 'STableSelection',
@@ -12,10 +10,10 @@ export const STableSelection = defineComponent({
     type: VueTypes.string<'Checkbox' | 'Radio'>().isRequired,
     indeterminate: VueTypes.bool().def(false),
     disabled: VueTypes.bool().def(false),
-    checked: VueTypes.bool().def(false)
+    checked: VueTypes.bool().def(false),
   },
   emits: {
-    check: (_checked: boolean) => true
+    check: (_checked: boolean) => true,
   },
   setup(props, context) {
     const onChange = (event: MouseEvent) => {
@@ -38,7 +36,7 @@ export const STableSelection = defineComponent({
       if (props.type === 'Checkbox') {
         return (
           <div
-            class='s-table-selection-container'
+            class="s-table-selection-container"
             onClick={onStop}
           >
             <Checkbox
@@ -55,7 +53,7 @@ export const STableSelection = defineComponent({
       if (props.type === 'Radio') {
         return (
           <div
-            class='s-table-selection-container'
+            class="s-table-selection-container"
             onClick={onStop}
           >
             <Radio
@@ -68,7 +66,7 @@ export const STableSelection = defineComponent({
         )
       }
     }
-  }
+  },
 })
 
 export default STableSelection

@@ -1,17 +1,21 @@
 import { App } from 'vue'
 
-// S-*
+// S-Icon
+// S-Ellipsis
+// S-IconSelect
 import { SIcon } from './S-Icon/index'
-import { isIconType } from './S-Icon/index'
-import { forIconType } from './S-Icon/index'
 import { SEllipsis } from './S-Ellipsis/index'
 import { SIconSelect } from './S-IconSelect/index'
+import { iconOptionsDefiner } from './S-IconSelect/index'
+
+// S-EditCell-*
 import { SEditCellInput } from './S-EditCell/input'
 import { SEditCellSelect } from './S-EditCell/select'
 import { SEditCellTextarea } from './S-EditCell/textarea'
 import { SEditCellSelectIcon } from './S-EditCell/select-icon'
 import { SEditCellTreeSelect } from './S-EditCell/tree-select'
 import { SEditCellDatePicker } from './S-EditCell/date-picker'
+import { SEditCellAutoComplete } from './S-EditCell/auto-complete'
 
 // S-Form
 import { SForm } from './S-Form/index'
@@ -20,8 +24,20 @@ import { formGridDefiner } from './S-Form/index'
 import { formRulesDefiner } from './S-Form/index'
 import { formGroupsDefiner } from './S-Form/index'
 
+// S-Tree
+import { STree } from './S-Tree/index'
+import { treeDataDefiner } from './S-Tree/index'
+import { treeLoadDataDefiner } from './S-Tree/index'
+import { treeEmitCheckDefiner } from './S-Tree/index'
+import { treeEmitSelectDefiner } from './S-Tree/index'
+import { treeEmitExpandDefiner } from './S-Tree/index'
+import { treeEmitChangeDefiner } from './S-Tree/index'
+import { treeDropHandlerDefiner } from './S-Tree/index'
+import { treeFieldNamesDefiner } from './S-Tree/index'
+
 // S-Table
 import { STable } from './S-Table/index'
+import { tableSorterDefiner } from './S-Table/index'
 import { tableScrollDefiner } from './S-Table/index'
 import { tableStickyDefiner } from './S-Table/index'
 import { tableSourcesDefiner } from './S-Table/index'
@@ -43,29 +59,48 @@ import { tableCustomHeaderCellRenderDefiner } from './S-Table/index'
 import { tableCustomBodyerCellRenderDefiner } from './S-Table/index'
 import { tableCustomFooterCellRenderDefiner } from './S-Table/index'
 
-// S-Tree
-import { STree } from './S-Tree/index'
-import { treeDataDefiner } from './S-Tree/index'
-import { treeLoadDataDefiner } from './S-Tree/index'
-import { treeEmitCheckDefiner } from './S-Tree/index'
-import { treeEmitSelectDefiner } from './S-Tree/index'
-import { treeEmitExpandDefiner } from './S-Tree/index'
-import { treeEmitChangeDefiner } from './S-Tree/index'
-import { treeDropHandlerDefiner } from './S-Tree/index'
-import { treeReplaceFieldsDefiner } from './S-Tree/index'
+// S-ProLayout
+import { SProLayout } from './S-ProLayout/index'
+import { SProGlobalHeader } from './S-ProLayout/index'
+import { proFlatMenuItem } from './S-ProLayout/index'
+import { proClearMenuItem } from './S-ProLayout/index'
+import { proUseMediaQuery } from './S-ProLayout/index'
+import { proUseRouteContext } from './S-ProLayout/index'
+import { proFirstMenuChildren } from './S-ProLayout/index'
+import { proCreateRouteContext } from './S-ProLayout/index'
+import { proProvideRouteContext } from './S-ProLayout/index'
+
+export default {
+  install(app: App) {
+    app.component('SEditCellInput', SEditCellInput)
+    app.component('SEditCellSelect', SEditCellSelect)
+    app.component('SEditCellTextarea', SEditCellTextarea)
+    app.component('SEditCellSelectIcon', SEditCellSelectIcon)
+    app.component('SEditCellTreeSelect', SEditCellTreeSelect)
+    app.component('SEditCellDatePicker', SEditCellDatePicker)
+    app.component('SEditCellAutoComplete', SEditCellAutoComplete)
+    app.component('SIconSelect', SIconSelect)
+    app.component('SEllipsis', SEllipsis)
+    app.component('STable', STable)
+    app.component('STree', STree)
+    app.component('SForm', SForm)
+    app.component('SIcon', SIcon)
+  },
+}
 
 export {
   SIcon,
   SEllipsis,
-  isIconType,
-  forIconType,
   SIconSelect,
+  iconOptionsDefiner,
+
   SEditCellInput,
   SEditCellSelect,
   SEditCellTextarea,
   SEditCellSelectIcon,
   SEditCellTreeSelect,
   SEditCellDatePicker,
+  SEditCellAutoComplete,
 
   SForm,
   formValidator,
@@ -73,7 +108,18 @@ export {
   formRulesDefiner,
   formGroupsDefiner,
 
+  STree,
+  treeDataDefiner,
+  treeLoadDataDefiner,
+  treeEmitCheckDefiner,
+  treeEmitSelectDefiner,
+  treeEmitExpandDefiner,
+  treeEmitChangeDefiner,
+  treeDropHandlerDefiner,
+  treeFieldNamesDefiner,
+
   STable,
+  tableSorterDefiner,
   tableScrollDefiner,
   tableStickyDefiner,
   tableColumnsDefiner,
@@ -95,30 +141,13 @@ export {
   tableCustomBodyerCellRenderDefiner,
   tableCustomFooterCellRenderDefiner,
 
-  STree,
-  treeDataDefiner,
-  treeLoadDataDefiner,
-  treeEmitCheckDefiner,
-  treeEmitSelectDefiner,
-  treeEmitExpandDefiner,
-  treeEmitChangeDefiner,
-  treeDropHandlerDefiner,
-  treeReplaceFieldsDefiner
-}
-
-export default {
-  install(app: App) {
-    app.component('SEditCellInput', SEditCellInput)
-    app.component('SEditCellSelect', SEditCellSelect)
-    app.component('SEditCellTextarea', SEditCellTextarea)
-    app.component('SEditCellSelectIcon', SEditCellSelectIcon)
-    app.component('SEditCellTreeSelect', SEditCellTreeSelect)
-    app.component('SEditCellDatePicker', SEditCellDatePicker)
-    app.component('SIconSelect', SIconSelect)
-    app.component('SEllipsis', SEllipsis)
-    app.component('STable', STable)
-    app.component('STree', STree)
-    app.component('SForm', SForm)
-    app.component('SIcon', SIcon)
-  }
+  SProLayout,
+  SProGlobalHeader,
+  proFlatMenuItem,
+  proClearMenuItem,
+  proUseMediaQuery,
+  proUseRouteContext,
+  proFirstMenuChildren,
+  proCreateRouteContext,
+  proProvideRouteContext,
 }

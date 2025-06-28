@@ -1,11 +1,16 @@
-import { Fragment, VNode, HTMLAttributes, SlotsType, ComputedRef, MaybeRef, UnwrapRef, Ref, isVNode, nextTick, renderSlot, defineComponent, onMounted, computed, reactive, ref, inject, watch, toRaw, unref } from 'vue'
-import { defaultConfigProvider } from 'ant-design-vue/es/config-provider'
+import './index.style.less'
+
+import { Fragment, VNode, HTMLAttributes, UnwrapRef, Ref, isVNode, nextTick, renderSlot, defineComponent, onMounted, computed, reactive, ref, watch, toRaw, unref } from 'vue'
+import { useConfigContextInject } from 'ant-design-vue/es/config-provider/context'
 import { PlusOutlined, MinusOutlined } from '@ant-design/icons-vue'
+import { TinyColor } from '@ctrl/tinycolor'
+
+import ATheme from 'ant-design-vue/es/theme'
+import SEllipsis from '@/S-Ellipsis/index'
 import * as VueTypes from 'vue-types'
 import helper from '@/helper'
-import Res from './res'
+import Res from './preset'
 
-import SEllipsis from '@/S-Ellipsis/index'
 import STableSelection from './index.selection'
 import STablePaginater from './index.paginater'
 import STableScrollbar from './index.scrollbar'
@@ -15,318 +20,39 @@ import STableDragger from './index.dragger'
 import STableCursor from './index.cursor'
 import STableSorter from './index.sorter'
 import STableEmpty from './index.empty'
-import './index.style.less'
 
-export interface STableStickyType {
-  topHeader: boolean | number;
-  leftFooter: boolean;
-  rightFooter: boolean;
-  bottomFooter: boolean | number;
-  bottomScrollbar: boolean;
-}
-
-export interface STableScrollType {
-  x: number | string | false;
-  y: number | 'auto' | false;
-  overflow: string | null;
-  scrollToFirstOffsetX?: number;
-  scrollToFirstOffsetY?: number;
-  scrollToFirstTargetX?: number;
-  scrollToFirstTargetY?: number;
-  scrollToFirstXOnChange: boolean;
-  scrollToFirstYOnChange: boolean;
-  getScrollResizeContainer?: () => HTMLElement;
-}
-
-export interface STableSorterType {
-  field: string;
-  value: 'ascend'| 'descend';
-}
-
-export interface STableRecordType {
-  [field: string]: any;
-}
-
-export interface STablePaginateType {
-  hideOnSinglePage: boolean;
-  defaultPageSize: number;
-  pageSizeOptions: Array<string>;
-  showSizeChanger?: boolean;
-  showQuickJumper: boolean;
-  showLessItems: boolean;
-  loadTotalSize?: number;
-  loadTotalPage?: number;
-  loadPageSize?: number;
-  loadPageNo?: number;
-  totalSize: number;
-  totalPage: number;
-  pageSize: number;
-  pageNo: number;
-  disabled: boolean;
-  visible: boolean;
-  simple: boolean;
-  fixed?: boolean;
-  mode: 'local' | 'remote';
-  showTotal?:	((total: number, range: [number, number]) => void) | boolean;
-}
-
-export interface STableCellIndexType {
-  colIndex: number;
-  rowIndex: number;
-}
-
-export interface STableCellSizesType {
-  colOffset: number;
-  rowOffset: number;
-  colIndex: number;
-  rowIndex: number;
-  colSpan: number;
-  rowSpan: number;
-  minWidth: number;
-  maxWidth: number;
-  height: number;
-  width: number;
-}
-
-export interface STableCellCacheType {
-  index: number;
-  rowSpan: number;
-  colSpan: number;
-  colCount: number;
-  rowCount: number;
-  cellAttrs: any;
-  cellProps: any;
-  cellValue: any;
-  cellRender: boolean;
-}
-
-export interface STableCellMegreType {
-  index: number;
-  colIndex: number;
-  rowIndex: number;
-  cachers: Map<number, STableCellCacheType>;
-  spikers: Set<number>;
-  empters: Set<number>;
-}
-
-export interface STableCellFixedType {
-  colOffset: number;
-  colSpan: number;
-}
-
-export interface STableRowKey<RecordType = STableRecordType> {
-  (record: RecordType): string
-}
-
-export interface STableTreeKey<RecordType = STableRecordType> {
-  (record: RecordType): string
-}
-
-export interface STableLoadSource<RecordType = STableRecordType> {
-  (
-    options: {
-      sorter: Array<{ field: string; value: 'ascend'| 'descend'; }>;
-      paginate: { pageSize: number; pageNo: number; totalPage: number; totalSize: number; mode: 'local' | 'remote'; };
-    }
-  ): STablePromiser<RecordType[] | { data: Array<RecordType>; pageNo: number; totalSize: number; } | { result: { data: Array<RecordType>; pageNo: number; totalSize: number; } }>;
-}
-
-export interface STableSettingsType<RecordType = STableRecordType> {
-  key: string;
-  title: string;
-  disabled: boolean;
-  children?: STableSettingsType<RecordType>[] | null;
-  column: STableColumnType<RecordType>
-}
-
-export interface STableExpanderRender<RecordType = STableRecordType> {
-  (option: { record: RecordType; rowIndex: number; groupIndex: number; groupLevel: number; groupIndexs: Record<number, number>; globalIndex: number; }): VNode;
-}
-
-export interface STableHeaderCellRender<RecordType = STableRecordType> {
-  (option: { title: string | number; column: STableColumnType<RecordType>; rowIndex: number; colIndex: number; }): VNode | STableRefWrapper<{
-    attrs?: HTMLAttributes;
-    props?: {
-      align?: 'left' | 'center' | 'right';
-      fixed?: 'left' | 'right' | false;
-      width?: number;
-      minWidth?: number;
-      maxWidth?: number;
-      tooltip?: boolean;
-      ellipsis?: boolean;
-      cellSpan?: boolean;
-      colSpan?: number;
-      rowSpan?: number;
-      sorter?: boolean;
-    };
-    children?: any;
-  }>;
-}
-
-export interface STableBodyerCellRender<RecordType = STableRecordType> {
-  (option: { value: any; record: RecordType; rowIndex: number; groupIndex: number; groupLevel: number; groupIndexs: Record<number, number>; globalIndex: number; column: STableColumnType<RecordType>; colIndex: number; }): VNode | STableRefWrapper<{
-    attrs?: HTMLAttributes;
-    props?: {
-      align?: 'left' | 'center' | 'right';
-      tooltip?: boolean;
-      ellipsis?: boolean;
-      cellSpan?: boolean;
-      colSpan?: number;
-      rowSpan?: number;
-    };
-    children?: any;
-  }>;
-}
-
-export interface STableFooterCellRender<RecordType = STableRecordType> {
-  (option: { value: any; record: RecordType; rowIndex: number; column: STableColumnType<RecordType>; colIndex: number; sources: RecordType[]; paginate: STablePaginateType; }): VNode | STableRefWrapper<{
-    attrs?: HTMLAttributes;
-    props?: {
-      align?: 'left' | 'center' | 'right';
-      tooltip?: boolean;
-      ellipsis?: boolean;
-      cellSpan?: boolean;
-      colSpan?: number;
-      rowSpan?: number;
-    };
-    children?: any;
-  }>;
-}
-
-export interface STableCustomHeaderRowAttrs<RecordType = STableRecordType> {
-  (options: { columns: STableColumnType<RecordType>[]; rowIndex: number; }): STableRefWrapper<HTMLAttributes>;
-}
-
-export interface STableCustomBodyerRowAttrs<RecordType = STableRecordType> {
-  (options: { record: RecordType; rowIndex: number; groupIndex: number; groupLevel: number; groupIndexs: Record<number, number>; globalIndex: number; }): STableRefWrapper<HTMLAttributes>;
-}
-
-export interface STableCustomBodyerRowStates<RecordType = STableRecordType> {
-  (options: { record: RecordType; rowIndex: number; groupIndex: number; groupLevel: number; groupIndexs: Record<number, number>; globalIndex: number; }): STableRefWrapper<{
-    selectable?: STableRefWrapper<boolean>;
-    expandable?: STableRefWrapper<boolean>;
-  }>;
-}
-
-export interface STableCustomFooterRowAttrs<RecordType = STableRecordType> {
-  (options: { record: RecordType; rowIndex: number; sources: RecordType[]; paginate: STablePaginateType; }): STableRefWrapper<HTMLAttributes>;
-}
-
-export interface STableWrapRecordType<RecordType = STableRecordType> {
-  key: STableKey;
-  parentKey: STableKey | null;
-  childKeys: STableKey[];
-  parentKeys: STableKey[];
-  referRecord: RecordType;
-  treeChildren: STableWrapRecordType<RecordType>[];
-  rowGroupLevel: number;
-  rowGroupIndex: number;
-  rowGroupIndexs: Record<number, number>;
-  rowGlobalIndex: number;
-  rowTreeKeyField: string;
-  rowKeyField: string;
-  rowHeight: number;
-  rowIndex: number;
-}
-
-export interface STableWrapColumnType<RecordType = STableRecordType> {
-  key: string;
-  title: string;
-  parentKey: STableKey | null;
-  childKeys: string[];
-  parentKeys: string[];
-  referColumn: STableColumnType<RecordType>;
-  cacheColumn: STablePartColumnType<RecordType>;
-  parentColumn: STableWrapColumnType<RecordType> | null;
-  treeChildren: STableWrapColumnType<RecordType>[];
-  rowGroupLevel: number;
-  rowGroupIndex: number;
-  rowGroupIndexs: Record<number, number>;
-}
-
-export interface STablePartColumnType<RecordType = STableRecordType> {
-  key?: string;
-  title: string;
-  dataIndex: string | Array<string>;
-  children?: STablePartColumnType<RecordType>[];
-  align?: 'left' | 'center' | 'right';
-  fixed?: 'left' | 'right' | false;
-  width?: number;
-  minWidth?: number;
-  maxWidth?: number;
-  settings?: { checkbox?: boolean; disabled?: boolean; };
-  resizable?: boolean;
-  ellipsis?: boolean;
-  tooltip?: boolean;
-  colSpan?: number;
-  rowSpan?: number;
-  sorter?: boolean;
-  sorterField?: string;
-  expandIcon?: boolean;
-  sorterValueChange?: (option: { field: string; value: 'ascend'| 'descend' | ''; values: Array<STableSorterType>; }) => void;
-  customHeaderCellRender?: STableHeaderCellRender;
-  customBodyerCellRender?: STableBodyerCellRender;
-  customFooterCellRender?: STableFooterCellRender;
-}
-
-export interface STableColumnType<RecordType = STableRecordType> {
-  key: string;
-  title: string;
-  parentKey: string;
-  dataIndex: string | Array<string>;
-  children: STableColumnType<RecordType>[];
-  align: 'left' | 'center' | 'right';
-  fixed: 'left' | 'right' | false;
-  width?: number;
-  minWidth: number;
-  maxWidth: number;
-  settings: { checkbox: boolean; disabled: boolean; };
-  resizable: boolean;
-  ellipsis: boolean;
-  tooltip: boolean;
-  colIndex: number;
-  rowIndex: number;
-  colOffset: number;
-  rowOffset: number;
-  colMaxSpan: number;
-  rowMaxSpan: number;
-  colSpan: number;
-  rowSpan: number;
-  sorter: boolean;
-  sortered: boolean;
-  sorterField: string;
-  sorterValue: 'ascend'| 'descend' | '';
-  expandIcon?: boolean;
-  sorterValueChange?: (option: { field: string; value: 'ascend'| 'descend' | ''; values: Array<STableSorterType>; }) => void;
-  customHeaderCellRender?: STableHeaderCellRender;
-  customBodyerCellRender?: STableBodyerCellRender;
-  customFooterCellRender?: STableFooterCellRender;
-}
-
-type STableeDefineSlots<RecordType = STableRecordType> = SlotsType<{
-  expander: Parameters<STableExpanderRender<RecordType>>[0];
-  headerCell: Parameters<STableHeaderCellRender<RecordType>>[0];
-  bodyerCell: Parameters<STableBodyerCellRender<RecordType>>[0];
-  footerCell: Parameters<STableFooterCellRender<RecordType>>[0];
-}>
-
-type STableDefineMethods = {
-  reload: (delay?: Promise<void> | boolean | number, force?: boolean) => Promise<void>;
-  refresh: (delay?: Promise<void> | boolean | number, force?: boolean) => Promise<void>;
-  select: (keys: STableKey[]) => void;
-  expand: (keys: STableKey[]) => void;
-  update: (clean?: boolean) => void;
-  clear: (clean?: boolean) => void;
-}
-
-export type STableKey = string | number
-export type STableSize = 'default' | 'middle' | 'small'
-export type STablePartStickyType = Partial<STableStickyType>
-export type STablePartScrollType = Partial<STableScrollType>
-export type STablePartPaginate = Partial<STablePaginateType>
-export type STableRefWrapper<T> = ComputedRef<T> | Ref<T> | T
-export type STableValuer<T> = MaybeRef<T> | ComputedRef<T>
-export type STablePromiser<T> = Promise<T> | T
+import type { STableKey } from './type'
+import type { STableSize } from './type'
+import type { STableValuer } from './type'
+import type { STableRowKey } from './type'
+import type { STableTreeKey } from './type'
+import type { STableColumnType } from './type'
+import type { STableSorterType } from './type'
+import type { STableLoadSource } from './type'
+import type { STableRecordType } from './type'
+import type { STableRefWrapper } from './type'
+import type { STablePartPaginate } from './type'
+import type { STableSettingsType } from './type'
+import type { STablePaginateType } from './type'
+import type { STableCellIndexType } from './type'
+import type { STableCellSizesType } from './type'
+import type { STableCellCacheType } from './type'
+import type { STableCellMegreType } from './type'
+import type { STableCellFixedType } from './type'
+import type { STableWrapRecordType } from './type'
+import type { STableWrapColumnType } from './type'
+import type { STablePartColumnType } from './type'
+import type { STablePartStickyType } from './type'
+import type { STablePartScrollType } from './type'
+import type { STableCustomHeaderRowAttrs } from './type'
+import type { STableCustomBodyerRowAttrs } from './type'
+import type { STableCustomBodyerRowStates } from './type'
+import type { STableCustomFooterRowAttrs } from './type'
+import type { STableHeaderCellRender } from './type'
+import type { STableBodyerCellRender } from './type'
+import type { STableFooterCellRender } from './type'
+import type { STableDefineMethods } from './type'
+import type { STableDefineSlots } from './type'
 
 export const STable = defineComponent({
   name: 'STable',
@@ -341,7 +67,7 @@ export const STable = defineComponent({
     sources: VueTypes.array<STableRecordType>().def(() => ([])),
     summarys: VueTypes.array<STableRecordType>().def(() => ([])),
     paginate: VueTypes.any<STablePartPaginate>().def(() => ({})),
-    loadData: VueTypes.func<STableLoadSource>().def(undefined),
+    loadData: VueTypes.func<STableLoadSource<any>>().def(undefined),
     tableLayout: VueTypes.string<'auto' | 'fixed'>().def(undefined),
     persistSourceRanges: VueTypes.any<Array<[number, number]> | boolean>().def(false),
     customHeaderRowAttrs: VueTypes.func<STableCustomHeaderRowAttrs>().def(undefined),
@@ -351,14 +77,15 @@ export const STable = defineComponent({
     customHeaderCellRender: VueTypes.func<STableHeaderCellRender>().def(undefined),
     customBodyerCellRender: VueTypes.func<STableBodyerCellRender>().def(undefined),
     customFooterCellRender: VueTypes.func<STableFooterCellRender>().def(undefined),
+    defaultColumnSorters: VueTypes.array<STableSorterType>().def(() => []),
+    defaultSelectAllRows: VueTypes.bool().def(false),
+    defaultExpandAllRows: VueTypes.bool().def(false),
     preserveSelectedRowKeys: VueTypes.bool().def(false),
     preserveExpandedRowKeys: VueTypes.bool().def(false),
     columnPresetResizable: VueTypes.bool().def(false),
     columnPresetDraggable: VueTypes.bool().def(false),
     columnSorterMultiple: VueTypes.bool().def(false),
     columnPresetSettings: VueTypes.bool().def(false),
-    defaultSelectAllRows: VueTypes.bool().def(false),
-    defaultExpandAllRows: VueTypes.bool().def(false),
     rowSelectedStrictly: VueTypes.bool().def(true),
     rowExpandedByClick: VueTypes.bool().def(false),
     cellMegreNormalize: VueTypes.bool().def(true),
@@ -380,7 +107,7 @@ export const STable = defineComponent({
     immediate: VueTypes.bool().def(true),
     loadinger: VueTypes.bool().def(true),
     loading: VueTypes.bool().def(false),
-    virtual: VueTypes.bool().def(true)
+    virtual: VueTypes.bool().def(true),
   },
   emits: {
     'update:loading': (loading: boolean) => true,
@@ -392,22 +119,23 @@ export const STable = defineComponent({
     'update:expandedRowKeys': (keys: Array<STableKey>) => true,
     'pageSizeChange': (pageNo: number, pageSize: number) => true,
     'pageChange': (pageNo: number, pageSize: number) => true,
-    'expand': (keys: Array<STableKey>, nodes: Array<STableRecordType | null>) => true,
-    'select': (keys: Array<STableKey>, nodes: Array<STableRecordType | null>) => true,
-    'sorter': (values: Array<STableSorterType>) => true
+    'expand': (keys: Array<STableKey>, records: Array<STableRecordType | null>) => true,
+    'select': (keys: Array<STableKey>, records: Array<STableRecordType | null>) => true,
+    'sorter': (values: Array<STableSorterType>) => true,
   },
+  slots: {} as STableDefineSlots<STableRecordType>,
   setup(props, context) {
     const watchOptions = { immediate: true }
     const watchDeepOptions = { immediate: true, deep: true }
     const renderRowPresets = reactive({ minBuffer: 5, maxBuffer: 10, minHeight: 32 })
-    const renderRowRanger = reactive({ renderOffset: [0, ~~(window.innerHeight / renderRowPresets.minHeight)], renderBuffer: [0, 10] })
-    const configProvider = inject('configProvider', defaultConfigProvider)
+    const renderRowRanger = reactive({ renderOffset: [0, 0], renderBuffer: [0, 10] })
+    const configProvider = useConfigContextInject()
 
     const propColumns = ref([...props.columns])
     const propSources = ref([...props.sources])
     const propSummarys = ref([...props.summarys])
 
-    const listSorters: Ref<STableSorterType[]> = ref([])
+    const listSorters: Ref<STableSorterType[]> = ref([...props.defaultColumnSorters])
     const treeColumns: Ref<STableWrapColumnType[]> = ref([])
     const listColumns: Ref<Array<STableColumnType>[]> = ref([])
     const dataColumns: Ref<Array<STableColumnType>> = ref([])
@@ -418,20 +146,20 @@ export const STable = defineComponent({
 
     const columnRowAttrs: Ref<STableRefWrapper<HTMLAttributes>[]> = ref([])
     const columnCellAttrs: Ref<STableRefWrapper<HTMLAttributes>[][]> = ref([])
-    const columnCellProps: Ref<STableRefWrapper<UnwrapRef<Exclude<ReturnType<STableHeaderCellRender>, VNode>>['props']>[][]> = ref([])
+    const columnCellProps: Ref<STableRefWrapper<UnwrapRef<NonNullable<Exclude<ReturnType<STableHeaderCellRender>, VNode>>>['props']>[][]> = ref([])
     const columnCellRender: Ref<Array<Array<any>>> = ref([])
 
     const treeSources: Ref<STableWrapRecordType[]> = ref([])
     const listSources: Ref<STableWrapRecordType[]> = ref([])
     const sourceRowAttrs: Ref<STableRefWrapper<HTMLAttributes>[]> = ref([])
     const sourceRowStates: Ref<ReturnType<STableCustomBodyerRowStates>[]> = ref([])
-    const sourceCellProps: Ref<Record<string, STableRefWrapper<UnwrapRef<Exclude<ReturnType<STableBodyerCellRender>, VNode>>['props']>>[]> = ref([])
+    const sourceCellProps: Ref<Record<string, STableRefWrapper<UnwrapRef<NonNullable<Exclude<ReturnType<STableBodyerCellRender>, VNode>>>['props']>>[]> = ref([])
     const sourceCellAttrs: Ref<Record<string, STableRefWrapper<HTMLAttributes>>[]> = ref([])
     const sourceCellRender: Ref<Array<Record<string, any>>> = ref([])
 
     const listSummarys: Ref<STableRecordType[]> = ref([])
     const summaryRowAttrs: Ref<STableRefWrapper<HTMLAttributes>[]> = ref([])
-    const summaryCellProps: Ref<Record<string, STableRefWrapper<UnwrapRef<Exclude<ReturnType<STableFooterCellRender>, VNode>>['props']>>[]> = ref([])
+    const summaryCellProps: Ref<Record<string, STableRefWrapper<UnwrapRef<NonNullable<Exclude<ReturnType<STableFooterCellRender>, VNode>>>['props']>>[]> = ref([])
     const summaryCellAttrs: Ref<Record<string, STableRefWrapper<HTMLAttributes>>[]> = ref([])
     const summaryCellRender: Ref<Array<Record<string, any>>> = ref([])
 
@@ -439,6 +167,7 @@ export const STable = defineComponent({
     const expandedRowKeys: Ref<Array<STableKey>> = ref([...props.expandedRowKeys])
     const sourceRowKeys: Ref<Array<STableKey>> = ref([])
     const loading: Ref<boolean> = ref(props.loading)
+    const token = ATheme.useToken().token
 
     const Optionser = {
       // reference
@@ -447,8 +176,8 @@ export const STable = defineComponent({
       refTableWrapper: ref(null) as Ref<HTMLElement | null>,
       refTableContainer: ref(null) as Ref<HTMLElement | null>,
       tableTheadSizes: ref([]) as Ref<Array<STableCellSizesType>>,
-      windowInnerWidth: ref(window.innerWidth),
-      windowInnerHeight: ref(window.innerHeight),
+      windowInnerWidth: ref(0),
+      windowInnerHeight: ref(0),
 
       // resizer - container
       getResizerContainer: undefined as (() => HTMLElement) | undefined,
@@ -459,6 +188,8 @@ export const STable = defineComponent({
       resizerScrollBottom: ref(0),
       resizerScrollClientWidth: ref(0),
       resizerScrollClientHeight: ref(0),
+      resizerScrollHeight: ref(0),
+      resizerScrollWidth: ref(0),
 
       // wrapper - scrollable
       wrapperScrollTop: ref(0),
@@ -467,6 +198,8 @@ export const STable = defineComponent({
       wrapperScrollBottom: ref(0),
       wrapperScrollClientHeight: ref(0),
       wrapperScrollClientWidth: ref(0),
+      wrapperScrollHeight: ref(0),
+      wrapperScrollWidth: ref(0),
 
       // column - draggable
       cursor: reactive({ visible: false, top: 0, left: 0, width: 0, height: 0, rowIndex: 0, colIndex: 0 }),
@@ -476,15 +209,15 @@ export const STable = defineComponent({
       resizer: {
         point: 0,
         queues: [] as { column: STableColumnType; width: number; minWidth: number; maxWidth: number; }[],
-        activate: false
-      }
+        activate: false,
+      },
     }
 
     const Paginator = {
       paginate: reactive({
         hideOnSinglePage: helper.isBoolean(props.paginate.hideOnSinglePage) ? props.paginate.hideOnSinglePage : false,
         defaultPageSize: helper.isFiniteNumber(props.paginate.defaultPageSize) && props.paginate.defaultPageSize > 0 ? ~~props.paginate.defaultPageSize : 20,
-        pageSizeOptions: helper.isNonEmptyArray(props.paginate.pageSizeOptions) ? props.paginate.pageSizeOptions : ['10', '20', '25', '50', '100', '200', '500'],
+        pageSizeOptions: helper.isNonEmptyArray(props.paginate.pageSizeOptions) ? props.paginate.pageSizeOptions : ['10', '15', '20', '25', '30', '50', '100', '200', '300', '500'],
         showSizeChanger: helper.isBoolean(props.paginate.showSizeChanger) ? props.paginate.showSizeChanger : undefined,
         showQuickJumper: helper.isBoolean(props.paginate.showQuickJumper) ? props.paginate.showQuickJumper : false,
         showLessItems: helper.isBoolean(props.paginate.showLessItems) ? props.paginate.showLessItems : false,
@@ -502,9 +235,9 @@ export const STable = defineComponent({
         simple: helper.isBoolean(props.paginate.simple) ? props.paginate.simple : false,
         fixed: helper.isBoolean(props.paginate.fixed) ? props.paginate.fixed : undefined,
         mode: (props.paginate.mode === 'local' ? 'local' : 'remote') as 'local' | 'remote',
-        size: (props.size || '') as string
+        size: (props.size || '') as string,
       }),
-      update: (paginate: STablePartPaginate & { size?: string}) => {
+      update: (paginate: STablePartPaginate & { size?: string; }) => {
         Paginator.paginate.size = !Methoder.isOwnProperty(paginate, ['size']) ? Paginator.paginate.size : ''
         Paginator.paginate.mode = !Methoder.isOwnProperty(paginate, ['mode']) ? Paginator.paginate.mode : paginate.mode === 'local' ? 'local' : 'remote'
         Paginator.paginate.fixed = helper.isBoolean(props.paginate.fixed) ? props.paginate.fixed : (helper.isFiniteNumber(Normalizer.sticky.value.bottomFooter) || Normalizer.sticky.value.bottomFooter === true)
@@ -514,7 +247,7 @@ export const STable = defineComponent({
         Paginator.paginate.showTotal = !Methoder.isOwnProperty(paginate, ['showTotal']) ? Paginator.paginate.showTotal : helper.isFunction(paginate.showTotal) ? paginate.showTotal : paginate.showTotal === true ? (total: any, range: any) => `第 ${range[0]}-${range[1]} 条 (共 ${total} 条)` : undefined
         Paginator.paginate.showLessItems = !Methoder.isOwnProperty(paginate, ['showLessItems']) ? Paginator.paginate.showLessItems : paginate.showLessItems === true
         Paginator.paginate.defaultPageSize = !Methoder.isOwnProperty(paginate, ['defaultPageSize']) ? Paginator.paginate.defaultPageSize : helper.isFiniteNumber(paginate.defaultPageSize) && paginate.defaultPageSize > 0 ? paginate.defaultPageSize : 20
-        Paginator.paginate.pageSizeOptions = !Methoder.isOwnProperty(paginate, ['pageSizeOptions']) ? Paginator.paginate.pageSizeOptions : helper.isNonEmptyArray(paginate.pageSizeOptions) ? paginate.pageSizeOptions : ['10', '20', '25', '50', '100', '200', '500']
+        Paginator.paginate.pageSizeOptions = !Methoder.isOwnProperty(paginate, ['pageSizeOptions']) ? Paginator.paginate.pageSizeOptions : helper.isNonEmptyArray(paginate.pageSizeOptions) ? paginate.pageSizeOptions : ['10', '15', '20', '25', '30', '50', '100', '200', '300', '500']
         Paginator.paginate.showSizeChanger = !Methoder.isOwnProperty(paginate, ['showSizeChanger']) ? Paginator.paginate.showSizeChanger : helper.isBoolean(paginate.showSizeChanger) ? paginate.showSizeChanger : undefined
         Paginator.paginate.showQuickJumper = !Methoder.isOwnProperty(paginate, ['showQuickJumper']) ? Paginator.paginate.showQuickJumper : paginate.showQuickJumper === true
         Paginator.paginate.hideOnSinglePage = !Methoder.isOwnProperty(paginate, ['hideOnSinglePage']) ? Paginator.paginate.hideOnSinglePage : paginate.hideOnSinglePage === true
@@ -532,7 +265,7 @@ export const STable = defineComponent({
         Paginator.paginate.loadTotalPage = !Methoder.isOwnProperty(paginate, ['loadTotalPage']) ? (~~(Paginator.paginate.loadTotalSize! / Paginator.paginate.loadPageSize!) + (Paginator.paginate.loadTotalSize! % Paginator.paginate.loadPageSize! ? 1 : 0)) : helper.isFiniteNumber(paginate.loadTotalPage) && paginate.loadTotalPage > 0 ? ~~paginate.loadTotalPage : 0
         Paginator.paginate.loadPageNo = Paginator.paginate.loadPageNo! <= Paginator.paginate.loadTotalPage! ? Paginator.paginate.loadPageNo! : Paginator.paginate.loadTotalPage!
         Paginator.paginate.loadPageNo = Paginator.paginate.loadPageNo! > 0 ? Paginator.paginate.loadPageNo! : 1
-      }
+      },
     }
 
     const Requester = {
@@ -557,8 +290,8 @@ export const STable = defineComponent({
             pageSize: page.pageSize,
             totalPage: page.totalPage,
             totalSize: page.totalSize,
-            mode: page.mode
-          }
+            mode: page.mode,
+          },
         }
 
         const failurer = (): void => {
@@ -620,12 +353,12 @@ export const STable = defineComponent({
         const update = () => { force && Methoder.forceUpdate() }
         const request = () => Requester.core({ ...Paginator.paginate, pageNo: 1 })
         return helper.toPromise(delay).then(() => request()).finally(() => update)
-      }
+      },
     }
 
     const Normalizer = {
       size: computed(() => {
-        return props.size || (configProvider.componentSize === 'large' ? 'default' : configProvider.componentSize)
+        return props.size || (configProvider.componentSize?.value === 'large' ? 'default' : configProvider.componentSize?.value) || 'default'
       }),
 
       sticky: computed(() => ({
@@ -633,7 +366,7 @@ export const STable = defineComponent({
         leftFooter: props.sticky.leftFooter ?? true,
         rightFooter: props.sticky.rightFooter ?? true,
         bottomFooter: props.sticky.bottomFooter ?? true,
-        bottomScrollbar: props.sticky.bottomScrollbar ?? true
+        bottomScrollbar: props.sticky.bottomScrollbar ?? false,
       })),
 
       scroll: computed(() => ({
@@ -646,7 +379,7 @@ export const STable = defineComponent({
         scrollToFirstOffsetX: props.scroll.scrollToFirstOffsetX,
         scrollToFirstOffsetY: props.scroll.scrollToFirstOffsetY,
         scrollToFirstTargetX: props.scroll.scrollToFirstTargetX,
-        scrollToFirstTargetY: props.scroll.scrollToFirstTargetY
+        scrollToFirstTargetY: props.scroll.scrollToFirstTargetY,
       })),
 
       virtual: computed(() => {
@@ -695,7 +428,7 @@ export const STable = defineComponent({
         }
 
         return props.persistSourceRanges === true
-      })
+      }),
     }
 
     const Computer = {
@@ -709,7 +442,7 @@ export const STable = defineComponent({
         return {
           overflow: overflow,
           optionser: Optionser,
-          direction: 'horizontal'
+          direction: 'horizontal',
         }
       }),
       hasBorder: computed(() => {
@@ -819,7 +552,7 @@ export const STable = defineComponent({
         type CellEmpters = Set<number>[]
         type CellSpikers = Set<number>[]
         type CellCachers = Map<number, STableCellCacheType>[]
-        type CellMergers = Array<ReturnType<typeof Methoder.takeCellMegre> & { cacher: { resizable?: boolean; } }>
+        type CellMergers = Array<ReturnType<typeof Methoder.takeCellMegre> & { cacher: { resizable?: boolean; }; }>
 
         const cellMergers: CellMergers = []
         const cellCachers: CellCachers = []
@@ -832,18 +565,18 @@ export const STable = defineComponent({
           const StoreSpikers = options.spikers
           const StoreEmpters = options.empters
 
-          const rowMaxSpaner = (columns: STableColumnType[]) : number => {
+          const rowMaxSpaner = (columns: STableColumnType[]): number => {
             const spans = columns.map(column => columnSettingsCheckKeys.value.includes(column.key) ? column.rowMaxSpan : 0)
             return Math.max(0, ...spans)
           }
 
-          const colMaxSpaner = (column: STableColumnType) : number => {
+          const colMaxSpaner = (column: STableColumnType): number => {
             return helper.isNonEmptyArray(column.children)
               ? column.children.reduce((span, column) => span + colMaxSpaner(column), 0)
               : columnSettingsCheckKeys.value.includes(column.key) ? column.colMaxSpan : 0
           }
 
-          const colSpaner = (column: STableColumnType) : number => {
+          const colSpaner = (column: STableColumnType): number => {
             if (helper.isNonEmptyArray(column.children)) {
               return column.children.reduce((span, column) => span + colSpaner(column), 0)
             }
@@ -873,7 +606,7 @@ export const STable = defineComponent({
                   cellAttrs: null,
                   cellProps: null,
                   cellValue: null,
-                  cellRender: true
+                  cellRender: true,
                 })
                 continue
               }
@@ -908,7 +641,7 @@ export const STable = defineComponent({
                 cellAttrs: cellAttrs,
                 cellProps: cellProps,
                 cellValue: cellValue,
-                cellRender: cellRender
+                cellRender: cellRender,
               })
             }
           }
@@ -936,7 +669,7 @@ export const STable = defineComponent({
                       cellAttrs: nextCacher.cellAttrs,
                       cellProps: nextCacher.cellProps,
                       cellValue: nextCacher.cellValue,
-                      cellRender: true
+                      cellRender: true,
                     })
                   }
                 }
@@ -976,7 +709,7 @@ export const STable = defineComponent({
                       cellAttrs: nextCacher.cellAttrs,
                       cellProps: nextCacher.cellProps,
                       cellValue: nextCacher.cellValue,
-                      cellRender: true
+                      cellRender: true,
                     })
                   }
                 }
@@ -996,7 +729,7 @@ export const STable = defineComponent({
                 rowIndex: rowIndex,
                 cachers: cellCachers,
                 spikers: cellSpikers,
-                empters: cellEmpters
+                empters: cellEmpters,
               })
 
               if (column) {
@@ -1055,8 +788,8 @@ export const STable = defineComponent({
                 maxWidth: helper.isNonEmptyObject(refCellProps) && Object.hasOwn(refCellProps, 'maxWidth') ? refCellProps.maxWidth ?? wrap.referColumn.maxWidth : wrap.referColumn.maxWidth,
                 ellipsis: helper.isNonEmptyObject(refCellProps) && Object.hasOwn(refCellProps, 'ellipsis') ? refCellProps.ellipsis ?? wrap.referColumn.ellipsis : wrap.referColumn.ellipsis,
                 tooltip: helper.isNonEmptyObject(refCellProps) && Object.hasOwn(refCellProps, 'tooltip') ? refCellProps.tooltip ?? wrap.referColumn.tooltip : wrap.referColumn.tooltip,
-                sorter: helper.isNonEmptyObject(refCellProps) && Object.hasOwn(refCellProps, 'sorter') ? refCellProps.sorter ?? wrap.referColumn.sorter : wrap.referColumn.sorter
-              }
+                sorter: helper.isNonEmptyObject(refCellProps) && Object.hasOwn(refCellProps, 'sorter') ? refCellProps.sorter ?? wrap.referColumn.sorter : wrap.referColumn.sorter,
+              },
             }
 
             if (helper.isNonEmptyArray(wrap.treeChildren)) {
@@ -1107,7 +840,7 @@ export const STable = defineComponent({
           mergers: cellMergers,
           cachers: cellCachers,
           spikers: cellSpikers,
-          empters: cellEmpters
+          empters: cellEmpters,
         })
 
         // filter column when column.key in checkKeys
@@ -1155,7 +888,7 @@ export const STable = defineComponent({
         const writer = (record: STableWrapRecordType, index: number) => {
           return {
             ...record,
-            rowIndex: index + 1
+            rowIndex: index + 1,
           }
         }
 
@@ -1221,7 +954,7 @@ export const STable = defineComponent({
       }),
       overflowScrollTop: computed(() => {
         return Optionser.wrapperScrollTop.value > 1 || Optionser.resizerScrollTop.value > 1
-      })
+      }),
     }
 
     const Methoder = {
@@ -1285,9 +1018,9 @@ export const STable = defineComponent({
 
           if (empty) {
             const empter = {
-              taskers: [] as { count: number, render: boolean }[],
+              taskers: [] as { count: number; render: boolean; }[],
               refers: [cellCacher] as typeof queues,
-              counts: 1
+              counts: 1,
             }
 
             for (const cacher of queues) {
@@ -1311,7 +1044,7 @@ export const STable = defineComponent({
               if (!tasker || tasker.render !== render) {
                 empter.taskers.push({
                   count: count2 > count1 ? count1 : count2,
-                  render: render
+                  render: render,
                 })
               }
 
@@ -1392,7 +1125,7 @@ export const STable = defineComponent({
 
           if (megre) {
             const empter = {
-              taskers: [] as { render: boolean, refers: typeof queues }[]
+              taskers: [] as { render: boolean; refers: typeof queues; }[],
             }
 
             for (const cacher of emptys) {
@@ -1406,7 +1139,7 @@ export const STable = defineComponent({
               if (!tasker || tasker.render !== render) {
                 empter.taskers.push({
                   render: cacher.cellRender,
-                  refers: [cacher]
+                  refers: [cacher],
                 })
               }
 
@@ -1443,7 +1176,7 @@ export const STable = defineComponent({
           rowIndex,
           cacher: cellCachers.get(index)!,
           spiker: cellSpikers.has(index),
-          empter: cellEmpters.has(index)
+          empter: cellEmpters.has(index),
         }
       },
 
@@ -1455,8 +1188,8 @@ export const STable = defineComponent({
             children: helper.isNonEmptyArray(part.treeChildren)
               ? Methoder.restoreColumns(part.treeChildren)
               : !helper.isArray(part.cacheColumn.children)
-                ? part.cacheColumn.children
-                : []
+                  ? part.cacheColumn.children
+                  : [],
           }
 
           if (column.children === undefined) {
@@ -1580,8 +1313,8 @@ export const STable = defineComponent({
               'sorterValueChange',
               'customHeaderCellRender',
               'customBodyerCellRender',
-              'customFooterCellRender'
-            ]
+              'customFooterCellRender',
+            ],
           })
 
           if (!changed) {
@@ -1671,17 +1404,25 @@ export const STable = defineComponent({
         for (const [index, column] of columns.entries()) {
           const columnMinWidth = helper.isFiniteNumber(column.minWidth) && column.minWidth > 0 ? column.minWidth : 0
           const columnMaxWidth = helper.isFiniteNumber(column.maxWidth) && column.maxWidth < Infinity ? column.maxWidth : Infinity
-          const columnResizable = helper.isBoolean(column.resizable) ? column.resizable : parent?.referColumn.resizable ?? props.columnPresetResizable
           const columnSettings = helper.isNonEmptyObject(column.settings) ? { checkbox: column.settings.checkbox !== false, disabled: column.settings.disabled === true } : { checkbox: true, disabled: false }
+          const columnResizable = helper.isBoolean(column.resizable) ? column.resizable : parent?.referColumn.resizable ?? props.columnPresetResizable
+          const columnSorterField = column.sorterField ?? (helper.isArray(column.dataIndex) ? column.dataIndex.join('.') : column.dataIndex)
+          const columnSorterValue = listSorters.value.find(sorter => sorter.field === columnSorterField)?.value ?? ''
+          const columnKey = column.key || (([] as any[]).concat(column.dataIndex).join('.'))
+
+          if (parent) {
+            columnSettings.checkbox = columnSettings.checkbox !== false && parent.referColumn.settings.checkbox !== false
+            columnSettings.disabled = columnSettings.disabled === true && parent.referColumn.settings.disabled === true
+          }
 
           const wrapColumn: STableWrapColumnType = {
-            key: column.key || (helper.isArray(column.dataIndex) ? column.dataIndex.join('.') : column.dataIndex),
+            key: columnKey,
             title: column.title,
             childKeys: [],
             parentKey: parent ? parent.key : null,
             parentKeys: parent ? [...parent.parentKeys, parent.key] : [],
             referColumn: {
-              key: column.key || (helper.isArray(column.dataIndex) ? column.dataIndex.join('.') : column.dataIndex),
+              key: columnKey,
               title: column.title,
               parentKey: parent ? parent.key : '',
               dataIndex: column.dataIndex,
@@ -1704,21 +1445,20 @@ export const STable = defineComponent({
               colSpan: helper.isFiniteNumber(column.colSpan) ? column.colSpan : NaN,
               rowSpan: helper.isFiniteNumber(column.rowSpan) ? column.rowSpan : NaN,
               sorter: (column.sorter ?? parent?.referColumn.sorter) === true,
-              sortered: false,
-              sorterField: column.sorterField ?? (helper.isArray(column.dataIndex) ? column.dataIndex.join('.') : column.dataIndex),
-              sorterValue: '',
+              sorterField: columnSorterField,
+              sorterValue: columnSorterValue,
               expandIcon: column.expandIcon ?? parent?.referColumn.expandIcon,
               sorterValueChange: column.sorterValueChange ?? parent?.referColumn.sorterValueChange,
               customHeaderCellRender: column.customHeaderCellRender ?? parent?.referColumn.customHeaderCellRender,
               customBodyerCellRender: column.customBodyerCellRender ?? parent?.referColumn.customBodyerCellRender,
-              customFooterCellRender: column.customFooterCellRender ?? parent?.referColumn.customFooterCellRender
+              customFooterCellRender: column.customFooterCellRender ?? parent?.referColumn.customFooterCellRender,
             },
             cacheColumn: column,
             parentColumn: parent || null,
             treeChildren: [],
             rowGroupLevel: parent ? parent.rowGroupLevel + 1 : 1,
             rowGroupIndex: parent ? parent.rowGroupIndex : index,
-            rowGroupIndexs: parent ? { ...parent.rowGroupIndexs, [parent.rowGroupLevel + 1]: index } : { 1: index }
+            rowGroupIndexs: parent ? { ...parent.rowGroupIndexs, [parent.rowGroupLevel + 1]: index } : { 1: index },
           }
 
           wraps.push(wrapColumn)
@@ -1742,7 +1482,7 @@ export const STable = defineComponent({
         return wraps
       },
 
-      normalizeTreeSources(sources: STableRecordType[], wraps: STableWrapRecordType[] = [], parent?: STableWrapRecordType, offset?: { line: number }) {
+      normalizeTreeSources(sources: STableRecordType[], wraps: STableWrapRecordType[] = [], parent?: STableWrapRecordType, offset?: { line: number; }) {
         for (const [index, source] of sources.entries()) {
           let rowKey = ''
           let treeKey = ''
@@ -1757,7 +1497,7 @@ export const STable = defineComponent({
 
           if (!offset) {
             offset = {
-              line: -1
+              line: -1,
             }
           }
 
@@ -1785,7 +1525,7 @@ export const STable = defineComponent({
             rowTreeKeyField: treeKey,
             rowKeyField: rowKey,
             rowHeight: oldRecord ? oldRecord.rowHeight : renderRowPresets.minHeight,
-            rowIndex: -1
+            rowIndex: -1,
           }
 
           wraps.push(wrapRecord)
@@ -1814,7 +1554,7 @@ export const STable = defineComponent({
             title: wrap.title,
             children: [],
             disabled: wrap.referColumn.settings.disabled,
-            column: wrap.referColumn
+            column: wrap.referColumn,
           }
 
           if (!columnSettingsAllKeys.value.includes(wrap.key)) {
@@ -1922,7 +1662,7 @@ export const STable = defineComponent({
           }
 
           if (helper.isFunction(props.customHeaderRowAttrs)) {
-            columnRowAttrs.value[rowIndex] = props.customHeaderRowAttrs({ columns, rowIndex })
+            columnRowAttrs.value[rowIndex] = props.customHeaderRowAttrs({ columns, rowIndex }) as any
           }
 
           if (columnRowAttrs.value[rowIndex] === undefined) {
@@ -1937,6 +1677,7 @@ export const STable = defineComponent({
 
           const rowIndex = column.rowIndex
           const colIndex = column.colIndex
+          const paginater = Paginator.paginate
           const isCellAttrsTreated = Methoder.isOwnProperty(columnCellAttrs.value, [rowIndex, colIndex])
           const isCellPropsTreated = Methoder.isOwnProperty(columnCellProps.value, [rowIndex, colIndex])
 
@@ -1958,8 +1699,9 @@ export const STable = defineComponent({
                 title: column.title,
                 column,
                 rowIndex,
-                colIndex
-              })
+                colIndex,
+                paginater,
+              }),
             )
 
             const cellAttrs = !isVNode(renderNode) && helper.isObject(renderNode) && helper.isObject(renderNode.attrs) && renderNode.attrs || undefined
@@ -1976,7 +1718,8 @@ export const STable = defineComponent({
               title: column.title,
               column,
               rowIndex,
-              colIndex
+              colIndex,
+              paginater,
             })
 
             const cellAttrs = !isVNode(renderNode) && helper.isObject(renderNode) && helper.isObject(renderNode.attrs) && renderNode.attrs || undefined
@@ -2017,7 +1760,7 @@ export const STable = defineComponent({
           const globalIndex = option.rowGlobalIndex
 
           if (helper.isFunction(props.customBodyerRowAttrs)) {
-            sourceRowAttrs.value[globalIndex] = props.customBodyerRowAttrs({ record, rowIndex, groupIndex, groupLevel, groupIndexs, globalIndex })
+            sourceRowAttrs.value[globalIndex] = props.customBodyerRowAttrs({ record, rowIndex, groupIndex, groupLevel, groupIndexs, globalIndex }) as any
           }
 
           if (helper.isFunction(props.customBodyerRowStates)) {
@@ -2038,6 +1781,7 @@ export const STable = defineComponent({
           const columnKey = column.key
           const colIndex = column.colIndex
           const dataIndex = column.dataIndex
+          const paginater = Paginator.paginate
 
           for (const option of sources) {
             const record = option.referRecord
@@ -2088,7 +1832,8 @@ export const STable = defineComponent({
                 groupIndexs,
                 globalIndex,
                 column,
-                colIndex
+                colIndex,
+                paginater,
               })
 
               const cellAttrs = !isVNode(renderNode) && helper.isObject(renderNode) && helper.isObject(renderNode.attrs) && renderNode.attrs || undefined
@@ -2110,7 +1855,8 @@ export const STable = defineComponent({
                 groupIndexs,
                 globalIndex,
                 column,
-                colIndex
+                colIndex,
+                paginater,
               })
 
               const cellAttrs = !isVNode(renderNode) && helper.isObject(renderNode) && helper.isObject(renderNode.attrs) && renderNode.attrs || undefined
@@ -2140,7 +1886,7 @@ export const STable = defineComponent({
       normalizeInitSummary(summarys: STableRecordType[]) {
         const records = Computer.filterPageSources.value.filter(refer => refer.rowGroupLevel === 1)
         const sources = records.map(refer => refer.referRecord)
-        const paginate = Paginator.paginate
+        const paginater = Paginator.paginate
 
         for (const [rowIndex, record] of summarys.entries()) {
           if (Methoder.isOwnProperty(summaryRowAttrs.value, [rowIndex])) {
@@ -2148,7 +1894,7 @@ export const STable = defineComponent({
           }
 
           if (helper.isFunction(props.customFooterRowAttrs)) {
-            summaryRowAttrs.value[rowIndex] = props.customFooterRowAttrs({ record, rowIndex, sources, paginate })
+            summaryRowAttrs.value[rowIndex] = props.customFooterRowAttrs({ record, rowIndex, sources, paginater }) as any
           }
 
           if (summaryRowAttrs.value[rowIndex] === undefined) {
@@ -2202,7 +1948,7 @@ export const STable = defineComponent({
                 column,
                 colIndex,
                 sources,
-                paginate
+                paginater,
               })
 
               const cellAttrs = !isVNode(renderNode) && helper.isObject(renderNode) && helper.isObject(renderNode.attrs) && renderNode.attrs || undefined
@@ -2222,7 +1968,7 @@ export const STable = defineComponent({
                 column,
                 colIndex,
                 sources,
-                paginate
+                paginater,
               })
 
               const cellAttrs = !isVNode(renderNode) && helper.isObject(renderNode) && helper.isObject(renderNode.attrs) && renderNode.attrs || undefined
@@ -2333,7 +2079,7 @@ export const STable = defineComponent({
         }
       },
 
-      forceUpdate(clean?: boolean) {
+      forceUpdate(clean = false) {
         if (clean === true) {
           // Clean Keys
           sourceRowKeys.value = []
@@ -2349,7 +2095,7 @@ export const STable = defineComponent({
           columnSettingsAllTrees.value = []
           columnSettingsCheckKeys.value = []
 
-          // Clean DataSources
+          // Clean Sources
           sourceRowKeys.value = []
           sourceRowAttrs.value = []
           sourceRowStates.value = []
@@ -2362,6 +2108,11 @@ export const STable = defineComponent({
           summaryCellProps.value = []
           summaryCellAttrs.value = []
           summaryCellRender.value = []
+
+          // Reset Columns / Sources / Summarys
+          propColumns.value = [...props.columns]
+          propSources.value = [...props.sources]
+          propSummarys.value = [...props.summarys]
         }
 
         // Update loading
@@ -2380,7 +2131,7 @@ export const STable = defineComponent({
         Methoder.normalizeTreeSettings(treeColumns.value)
         Methoder.normalizeInitColumns(listColumns.value)
 
-        // Update DataSources
+        // Update Sources
         sourceRowKeys.value = []
         sourceRowAttrs.value = []
         sourceRowStates.value = []
@@ -2403,91 +2154,6 @@ export const STable = defineComponent({
         Methoder.cleanSelectedRowKeys()
         Methoder.cleanExpandedRowKeys()
       },
-
-      forceClear(clean?: boolean) {
-        if (clean === true) {
-          // Clean Keys
-          sourceRowKeys.value = []
-          selectedRowKeys.value = []
-          expandedRowKeys.value = []
-
-          // Clean Columns
-          columnRowAttrs.value = []
-          columnCellAttrs.value = []
-          columnCellProps.value = []
-          columnCellRender.value = []
-          columnSettingsAllKeys.value = []
-          columnSettingsAllTrees.value = []
-          columnSettingsCheckKeys.value = []
-
-          // Clean DataSources
-          sourceRowKeys.value = []
-          sourceRowAttrs.value = []
-          sourceRowStates.value = []
-          sourceCellProps.value = []
-          sourceCellAttrs.value = []
-          sourceCellRender.value = []
-
-          // Clean Summarys
-          summaryRowAttrs.value = []
-          summaryCellProps.value = []
-          summaryCellAttrs.value = []
-          summaryCellRender.value = []
-        }
-
-        // Update loading
-        loading.value = false
-
-        // Update Columns
-        columnRowAttrs.value = []
-        columnCellAttrs.value = []
-        columnCellProps.value = []
-        columnCellRender.value = []
-        columnSettingsAllKeys.value = []
-        columnSettingsAllTrees.value = []
-        treeColumns.value = Methoder.normalizeTreeColumns(propColumns.value, [])
-        listColumns.value = Methoder.normalizeListColumns(treeColumns.value, [])
-        dataColumns.value = Methoder.normalizeDataColumns(listColumns.value)
-        Methoder.normalizeTreeSettings(treeColumns.value)
-        Methoder.normalizeInitColumns(listColumns.value)
-
-        // Update DataSources
-        sourceRowKeys.value = []
-        sourceRowAttrs.value = []
-        sourceRowStates.value = []
-        sourceCellProps.value = []
-        sourceCellAttrs.value = []
-        sourceCellRender.value = []
-        treeSources.value = Methoder.normalizeTreeSources([], [])
-        listSources.value = Methoder.normalizeListSources(treeSources.value, [])
-        Methoder.normalizeInitSources(listSources.value)
-
-        // Update Summarys
-        summaryRowAttrs.value = []
-        summaryCellProps.value = []
-        summaryCellAttrs.value = []
-        summaryCellRender.value = []
-        listSummarys.value = Methoder.normalizeListSummary(propSummarys.value)
-        Methoder.normalizeInitSummary(listSummarys.value)
-
-        // Update Clean RowKeys
-        Methoder.cleanSelectedRowKeys()
-        Methoder.cleanExpandedRowKeys()
-      }
-    }
-
-    const Observer = {
-      intersectionObserver: new IntersectionObserver(() => {
-
-      }),
-
-      mutationObserver: new MutationObserver(() => {
-
-      }),
-
-      resizeObserver: new ResizeObserver(() => {
-        Eventer.updateColumnRender()
-      })
     }
 
     const Eventer = {
@@ -2499,7 +2165,7 @@ export const STable = defineComponent({
 
           const store = {
             queues: queues,
-            range: Math.abs(range)
+            range: Math.abs(range),
           }
 
           queues.sort((next, prev) => {
@@ -2639,7 +2305,7 @@ export const STable = defineComponent({
         const refTableNoder = Optionser.refTableNoder.value
         const resizerContainer = Optionser.resizerContainer.value
 
-        if (!(refTableNoder instanceof HTMLElement) || !(resizerContainer instanceof HTMLElement)) {
+        if (typeof HTMLElement === 'undefined' || !(refTableNoder instanceof HTMLElement) || !(resizerContainer instanceof HTMLElement)) {
           return
         }
 
@@ -2671,7 +2337,7 @@ export const STable = defineComponent({
           ? Normalizer.scroll.value.getScrollResizeContainer()
           : null
 
-        if (!(container instanceof HTMLElement)) {
+        if (typeof HTMLElement === 'undefined' || !(container instanceof HTMLElement)) {
           Optionser.resizerContainer.value = null
           Optionser.resizerScrollTop.value = 0
           Optionser.resizerScrollLeft.value = 0
@@ -2679,9 +2345,11 @@ export const STable = defineComponent({
           Optionser.resizerScrollBottom.value = 0
           Optionser.resizerScrollClientWidth.value = 0
           Optionser.resizerScrollClientHeight.value = 0
+          Optionser.resizerScrollHeight.value = 0
+          Optionser.resizerScrollWidth.value = 0
         }
 
-        if (container instanceof HTMLElement) {
+        if (typeof HTMLElement !== 'undefined' && container instanceof HTMLElement) {
           const clientRect = container.getBoundingClientRect()
           const scrollHeight = container.scrollHeight || 0
           const scrollWidth = container.scrollWidth || 0
@@ -2695,6 +2363,8 @@ export const STable = defineComponent({
           Optionser.resizerScrollBottom.value = scrollHeight - (scrollTop + clientRect.height) || 0
           Optionser.resizerScrollClientWidth.value = clientRect.width
           Optionser.resizerScrollClientHeight.value = clientRect.height
+          Optionser.resizerScrollHeight.value = scrollHeight
+          Optionser.resizerScrollWidth.value = scrollWidth
         }
       },
 
@@ -2713,12 +2383,19 @@ export const STable = defineComponent({
           Optionser.wrapperScrollBottom.value = scrollHeight - (scrollTop + scrollBounding.height) || 0
           Optionser.wrapperScrollClientWidth.value = scrollBounding.width
           Optionser.wrapperScrollClientHeight.value = scrollBounding.height
+          Optionser.wrapperScrollHeight.value = scrollHeight
+          Optionser.wrapperScrollWidth.value = scrollWidth
         }
       },
 
       updateWindowContainer() {
         Optionser.windowInnerWidth.value = window.innerWidth
         Optionser.windowInnerHeight.value = window.innerHeight
+      },
+
+      updateRenderRowRanger() {
+        renderRowRanger.renderOffset = [0, ~~(window.innerHeight / renderRowPresets.minHeight)]
+        renderRowRanger.renderBuffer = [0, 10]
       },
 
       updateTheadContainer() {
@@ -2769,7 +2446,7 @@ export const STable = defineComponent({
               minWidth,
               maxWidth,
               width: tableThead?.offsetWidth || 0,
-              height: tableThead?.offsetHeight || 0
+              height: tableThead?.offsetHeight || 0,
             }
           })
         }
@@ -2807,7 +2484,7 @@ export const STable = defineComponent({
                 Updater.updateColSettings(wrap.treeChildren)
               }
             }
-          }
+          },
         }
 
         Updater.updateColSettings(treeColumns.value)
@@ -2834,7 +2511,7 @@ export const STable = defineComponent({
         Eventer.updateResizerContainer()
         Eventer.updateWrapperContainer()
         Eventer.updateColGroupRender()
-      }
+      },
     }
 
     const Render = {
@@ -2846,7 +2523,7 @@ export const STable = defineComponent({
         const style = {
           width: 'auto',
           minWidth: `0px`,
-          maxWidth: 'none'
+          maxWidth: 'none',
         }
 
         if (/^\+?\d+\.?\d*(px)?$/.test(`${width}`)) {
@@ -2889,57 +2566,75 @@ export const STable = defineComponent({
       },
 
       computeTableChildStyle(column: STableColumnType, fixeder: STableCellFixedType, type: string) {
+        const fixed = {
+          left: false,
+          right: false,
+        }
+
         const style = {}
         const isThead = type === 'thead'
         const isTfoot = type === 'tfoot'
         const tableTheadSizes = Optionser.tableTheadSizes.value
         const OffsetLeftWidth = Computer.hasSelection.value ? (Normalizer.size.value === 'small' ? 32 : Normalizer.size.value === 'middle' ? 36 : 38) : 0
-        const currentFixedLeft = Computer.fixedLeftIndex.value > -1 && fixeder.colOffset <= Computer.fixedLeftIndex.value && (!isTfoot || Normalizer.sticky.value.leftFooter)
-        const currentFixedRight = Computer.fixedRightIndex.value > -1 && fixeder.colOffset >= Computer.fixedRightIndex.value && (!isTfoot || Normalizer.sticky.value.rightFooter)
+        const currentFixedLeft = Computer.fixedLeftIndex.value > -1 && fixeder.colOffset <= Computer.fixedLeftIndex.value
+        const currentFixedRight = Computer.fixedRightIndex.value > -1 && fixeder.colOffset >= Computer.fixedRightIndex.value
         const overflowScrollRight = Computer.overflowScrollRight.value
         const overflowScrollLeft = Computer.overflowScrollLeft.value
 
+        if (isTfoot) {
+          const leftFooter = Normalizer.sticky.value.leftFooter
+          const rightFooter = Normalizer.sticky.value.rightFooter
+
+          fixed.left = currentFixedLeft && (helper.isNumber(leftFooter) ? (fixeder.colOffset <= leftFooter) : leftFooter === true)
+          fixed.right = currentFixedRight && (helper.isNumber(rightFooter) ? (fixeder.colOffset >= rightFooter) : rightFooter === true)
+        }
+
+        if (!isTfoot) {
+          fixed.left = currentFixedLeft
+          fixed.right = currentFixedRight
+        }
+
         if (/^\+?\d+\.?\d*(px)?$/.test(`${column.minWidth}`)) {
           Object.assign(style, {
-            minWidth: parseInt(`${column.minWidth}`) + 'px'
+            minWidth: parseInt(`${column.minWidth}`) + 'px',
           })
         }
 
         if (/^\+?\d+\.?\d*(px)?$/.test(`${column.maxWidth}`)) {
           Object.assign(style, {
-            maxWidth: parseInt(`${column.maxWidth}`) + 'px'
+            maxWidth: parseInt(`${column.maxWidth}`) + 'px',
           })
         }
 
         if (typeof column.align === 'string') {
           Object.assign(style, {
-            'text-align': column.align || 'left'
+            'text-align': column.align || 'left',
           })
         }
 
-        if (currentFixedLeft === true) {
-          const offsetWidth = !isTfoot || fixeder.colOffset > 0 ? OffsetLeftWidth : 0
-          const leftWidth = tableTheadSizes.reduce((total, item, index) => index < fixeder.colOffset ? total + item.width : total, 0)
-          const boxShadow = '2px ' + (isThead ? '-1px' : '1px') + ' 3px 0 rgba(0, 0, 0, .15)'
-
-          Object.assign(style, {
-            'z-index': 5,
-            'position': 'sticky',
-            'box-shadow': overflowScrollLeft && (isThead || fixeder.colOffset + fixeder.colSpan - 1 === Computer.fixedLeftIndex.value) ? boxShadow : 'none',
-            'left': (leftWidth + offsetWidth > 0 ? offsetWidth + leftWidth - 1 : offsetWidth) + 'px'
-          })
-        }
-
-        if (currentFixedRight === true) {
+        if (fixed.right === true) {
           const reverseSizes = [...tableTheadSizes].reverse()
           const rightWidth = reverseSizes.reduce((total, item, index) => index < reverseSizes.length - fixeder.colOffset - 1 ? total + item.width : total, 0)
-          const boxShadow = '-2px ' + (isThead ? '-1px' : '1px') + ' 3px 0 rgba(0, 0, 0, .15)'
+          const boxShadow = '-2px ' + (isThead ? '-1px' : '1px') + ' 3px 0 rgba(0, 0, 0, .1)'
 
           Object.assign(style, {
             'position': 'sticky',
             'box-shadow': overflowScrollRight && (isThead || fixeder.colOffset === Computer.fixedRightIndex.value) ? boxShadow : 'none',
             'z-index': reverseSizes.length + 5 - fixeder.colOffset,
-            'right': (rightWidth > 0 ? rightWidth - 1 : 0) + 'px'
+            'right': (rightWidth > 0 ? rightWidth - 1 : 0) + 'px',
+          })
+        }
+
+        if (fixed.left === true) {
+          const offsetWidth = !isTfoot || fixeder.colOffset > 0 ? OffsetLeftWidth : 0
+          const leftWidth = tableTheadSizes.reduce((total, item, index) => index < fixeder.colOffset ? total + item.width : total, 0)
+          const boxShadow = '2px ' + (isThead ? '-1px' : '1px') + ' 3px 0 rgba(0, 0, 0, .1)'
+
+          Object.assign(style, {
+            'z-index': 5,
+            'position': 'sticky',
+            'box-shadow': overflowScrollLeft && (isThead || fixeder.colOffset + fixeder.colSpan - 1 === Computer.fixedLeftIndex.value) ? boxShadow : 'none',
+            'left': (leftWidth + offsetWidth > 0 ? offsetWidth + leftWidth - 1 : offsetWidth) + 'px',
           })
         }
 
@@ -2961,7 +2656,7 @@ export const STable = defineComponent({
 
           if (typeof marks.align === 'string') {
             Object.assign(attrs.style, {
-              'text-align': marks.align || 'left'
+              'text-align': marks.align || 'left',
             })
           }
 
@@ -2969,7 +2664,7 @@ export const STable = defineComponent({
         }
 
         return {}
-      }
+      },
     }
 
     const Emiter = {
@@ -2997,13 +2692,13 @@ export const STable = defineComponent({
       sorter: (values: Array<STableSorterType>) => {
         context.emit('sorter', values)
         Requester.refresh()
-      }
+      },
     }
 
     watch([() => props.columns, () => props.sources, () => props.summarys], ([newColumns, newSources, newSummarys], [oldColumns, oldSources, oldSummarys]) => {
-      const columnsChanged = newColumns !== oldColumns && Methoder.isColumnsChanged(propColumns.value, treeColumns.value)
-      const sourcesChanged = newSources !== oldSources && Methoder.isSourcesChanged(propSources.value, treeSources.value)
-      const summaryChanged = newSummarys !== oldSummarys && Methoder.isSummaryChanged(propSummarys.value, listSummarys.value)
+      const columnsChanged = newColumns !== oldColumns && (Methoder.isColumnsChanged(newColumns, treeColumns.value) || Methoder.isColumnsChanged(propColumns.value, treeColumns.value))
+      const sourcesChanged = newSources !== oldSources && (Methoder.isSourcesChanged(newSources, treeSources.value) || Methoder.isSourcesChanged(propSources.value, treeSources.value))
+      const summaryChanged = newSummarys !== oldSummarys && (Methoder.isSummaryChanged(newSummarys, listSummarys.value) || Methoder.isSummaryChanged(propSummarys.value, listSummarys.value))
       const sourcesReseted = sourcesChanged && Methoder.isSourcesChanged(propSources.value.slice(0, treeSources.value.length), treeSources.value)
 
       if (columnsChanged) {
@@ -3070,10 +2765,20 @@ export const STable = defineComponent({
     watch(() => loading.value, () => { context.emit('update:loading', loading.value) }, watchDeepOptions)
 
     onMounted(() => {
+      const Observer = {
+        intersectionObserver: new IntersectionObserver(() => {}),
+        mutationObserver: new MutationObserver(() => {}),
+        resizeObserver: new ResizeObserver(() => {
+          Eventer.updateColumnRender()
+        }),
+      }
+
       if (props.immediate !== false) {
         Requester.refresh()
       }
 
+      Eventer.updateWindowContainer()
+      Eventer.updateRenderRowRanger()
       Eventer.updateResizerContainer()
       Eventer.updateWrapperContainer()
       Eventer.updateColGroupRender()
@@ -3082,7 +2787,7 @@ export const STable = defineComponent({
       document.addEventListener('mousemove', Eventer.documentMouseMove)
       window.addEventListener('resize', Eventer.updateWindowContainer)
 
-      Observer.resizeObserver.observe(Optionser.refTableWrapper.value!)
+      Observer.resizeObserver?.observe(Optionser.refTableWrapper.value!)
 
       nextTick(() => {
         let proxyer: any = Optionser.refTableWrapper.value
@@ -3106,7 +2811,7 @@ export const STable = defineComponent({
 
         if (proxyer instanceof HTMLElement) {
           proxyer.addEventListener('scroll', Eventer.updateResizerContainer, { passive: true })
-          Observer.resizeObserver.observe(proxyer)
+          Observer.resizeObserver?.observe(proxyer)
           Eventer.updateResizerContainer()
         }
       })
@@ -3118,11 +2823,9 @@ export const STable = defineComponent({
       select: Methoder.updateSetupSelectedRowKeys,
       expand: Methoder.updateSetupExpandedRowKeys,
       update: Methoder.forceUpdate,
-      clear: Methoder.forceClear
     })
 
     const RenderTableScroller = (ctx: typeof context) => {
-      const allKeys: STableKey[] = []
       const enableKeys: STableKey[] = []
       const disableKeys: STableKey[] = []
       const selectedKeys: STableKey[] = [...selectedRowKeys.value]
@@ -3163,12 +2866,46 @@ export const STable = defineComponent({
               disableKeys.includes(rowKey) || disableKeys.push(rowKey)
             }
           }
-        }
 
-        allKeys.push(
-          ...enableKeys,
-          ...disableKeys
-        )
+          for (const record of allReverseKeys) {
+            const rowKey = record.key
+            const childKeys = record.childKeys
+            const filterKeys = childKeys.filter(key => enableKeys.includes(key))
+
+            if (filterKeys.length === 0) {
+              continue
+            }
+
+            if (disableKeys.includes(rowKey)) {
+              continue
+            }
+
+            if (selectedRowKeys.value.includes(rowKey) && !filterKeys.every(key => selectedRowKeys.value.includes(key))) {
+              selectedRowKeys.value.splice(0, selectedRowKeys.value.length, ...selectedRowKeys.value.filter(key => key !== rowKey))
+            }
+
+            if (!selectedRowKeys.value.includes(rowKey) && filterKeys.every(key => selectedRowKeys.value.includes(key))) {
+              selectedRowKeys.value.push(rowKey)
+            }
+          }
+        }
+      }
+
+      if (props.selectedRowMode === 'Radio') {
+        for (const record of [...listSources.value]) {
+          const rowKey = record.key
+          const rowGlobalIndex = record.rowGlobalIndex
+          const rowState = Methoder.getValue(sourceRowStates.value[rowGlobalIndex])
+          const selectable = Methoder.getValue(rowState?.selectable) !== false
+
+          if (selectable && !disableKeys.includes(rowKey) && !enableKeys.includes(rowKey)) {
+            enableKeys.push(rowKey)
+          }
+
+          if (!selectable && !disableKeys.includes(rowKey)) {
+            disableKeys.push(rowKey)
+          }
+        }
       }
 
       const RenderColGroup = () => {
@@ -3177,8 +2914,8 @@ export const STable = defineComponent({
 
         return (
           <colgroup>
-            { render && <col col-index={-1} style={{ width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` }}/>}
-            { ref(Computer.filterDataColumns).value.map(column => <col col-index={column.colIndex} style={Render.computeTableGroupStyle(column)}/>) }
+            { render && <col col-index={-1} style={{ width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` }} />}
+            { ref(Computer.filterDataColumns).value.map(column => <col col-index={column.colIndex} style={Render.computeTableGroupStyle(column)} />) }
           </colgroup>
         )
       }
@@ -3196,12 +2933,12 @@ export const STable = defineComponent({
           Object.assign(style, {
             'position': 'sticky',
             'top': top + 'px',
-            'z-index': 50
+            'z-index': 50,
           })
 
           if (Computer.overflowScrollTop.value) {
             Object.assign(style, {
-              'box-shadow': '0 1px 1px 0 rgba(0, 0, 0, .15)'
+              'box-shadow': '0 1px 1px 0 rgba(0, 0, 0, .1)',
             })
           }
         }
@@ -3227,13 +2964,13 @@ export const STable = defineComponent({
                     small: '8px 5px',
                     middle: '12px 7px',
                     default: '16px 6px',
-                    large: '16px 6px'
+                    large: '16px 6px',
                   }
 
                   const style: any = {
                     padding: store[Normalizer.size.value] || '16px 6px',
                     textAlign: 'center',
-                    ...props.tHeaderThStyle
+                    ...props.tHeaderThStyle,
                   }
 
                   if (Computer.fixedLeftIndex.value > -1) {
@@ -3241,7 +2978,7 @@ export const STable = defineComponent({
                       'text-align': 'center',
                       'position': 'sticky',
                       'left': '0px',
-                      'z-index': 5
+                      'z-index': 5,
                     })
                   }
 
@@ -3308,11 +3045,25 @@ export const STable = defineComponent({
                       const sorterValue = column.sorterValue
                       const rowMaxSpans = Computer.filterDataColumns.value.map(col => col.rowMaxSpan)
                       const sortable = sorter && (rowOffset + rowSpan === Math.max(...rowMaxSpans, 0))
+                      const title = Methoder.getValue(columnCellRender.value[rowIndex][colIndex])
 
-                      const renderTitle = Methoder.getValue(columnCellRender.value[rowIndex][colIndex])
-                      const computeTitle = !Methoder.isVueNode(renderTitle) && helper.isFunction(ctx.slots.headerCell)
-                        ? Methoder.getVNodes(renderSlot(ctx.slots, 'headerCell', { title: renderTitle, column, rowIndex, colIndex }))
-                        : renderTitle
+                      const options = {
+                        title: title,
+                        column: column,
+                        rowIndex: rowIndex,
+                        colIndex: colIndex,
+                        scroller: {
+                          top: Optionser.resizerScrollTop.value,
+                          left: Optionser.resizerScrollLeft.value,
+                          right: Optionser.resizerScrollRight.value,
+                          bottom: Optionser.resizerScrollBottom.value,
+                        },
+                        paginater: Paginator.paginate,
+                      }
+
+                      const computeTitle = !Methoder.isVueNode(title) && helper.isFunction(ctx.slots.headerCell)
+                        ? Methoder.getVNodes(renderSlot(ctx.slots, 'headerCell', options))
+                        : title
 
                       const sorterChanger = (options: STableSorterType) => {
                         const field = options.field
@@ -3369,7 +3120,7 @@ export const STable = defineComponent({
                         <th
                           colspan={column.colSpan}
                           rowspan={column.rowSpan}
-                          { ...Methoder.getValue(columnCellAttrs.value[rowIndex][colIndex]) }
+                          {...Methoder.getValue(columnCellAttrs.value[rowIndex][colIndex])}
                           style={{ ...Render.computeTableChildStyle(column, column, 'thead'), ...props.tHeaderThStyle }}
                           class={['s-table-thead-th', { 's-table-thead-leafed-th': column.rowIndex === column.rowMaxSpan - 1, 's-table-thead-draggable-th': props.columnPresetDraggable === true, 's-table-thead-sortable-th': sortable }]}
                           col-index={column.colIndex}
@@ -3378,16 +3129,16 @@ export const STable = defineComponent({
                           row-offset={column.rowOffset}
                         >
                           <SEllipsis
-                            visible={column.tooltip === true ? undefined : false}
+                            open={column.tooltip === true ? undefined : false}
                             tooltip={column.tooltip === true || column.ellipsis === true}
                             ellipsis={column.tooltip === true || column.ellipsis === true}
                           >
-                            { computeTitle ?? renderTitle }
+                            { computeTitle ?? title }
                           </SEllipsis>
 
-                          <div class='s-table-thead-th-functional'>
+                          <div class="s-table-thead-th-functional">
                             { sortable ? <STableSorter field={sorterField} value={sorterValue} onChange={sorterChanger} /> : null }
-                            { column.resizable ? <span class='s-table-thead-functional-resizable'/> : null }
+                            { column.resizable ? <span class="s-table-thead-functional-resizable" /> : null }
                           </div>
                         </th>
                       )
@@ -3397,9 +3148,9 @@ export const STable = defineComponent({
 
                 return (
                   <tr
-                    { ...Methoder.getValue(columnRowAttrs.value[rowIndex]) }
+                    {...Methoder.getValue(columnRowAttrs.value[rowIndex])}
                     style={{ 'position': 'relative', 'z-index': listColumns.value.length - rowIndex }}
-                    class='s-table-thead-tr'
+                    class="s-table-thead-tr"
                     row-index={rowIndex}
                   >
                     { RenderSelection() }
@@ -3419,13 +3170,13 @@ export const STable = defineComponent({
               class={['s-table-tbody', { 's-border-table': ([] as any).concat(props.border).includes('tbody') }]}
               style={{ 'position': 'relative', 'z-index': 10 }}
             >
-              <tr class='s-table-tbody-tr'>
+              <tr class="s-table-tbody-tr">
                 <td
-                  class='s-table-tbody-td'
+                  class="s-table-tbody-td"
                   style={{ ...props.tBodyerTdStyle }}
                   colspan={Computer.hasSelection.value ? Computer.filterDataColumns.value.length + 1 : Computer.filterDataColumns.value.length}
                 >
-                  <STableEmpty/>
+                  <STableEmpty />
                 </td>
               </tr>
             </tbody>
@@ -3494,7 +3245,7 @@ export const STable = defineComponent({
                     cellAttrs: null,
                     cellProps: null,
                     cellValue: null,
-                    cellRender: true
+                    cellRender: true,
                   })
                 }
               }
@@ -3518,7 +3269,7 @@ export const STable = defineComponent({
                     cellAttrs: null,
                     cellProps: null,
                     cellValue: null,
-                    cellRender: false
+                    cellRender: false,
                   })
 
                   count++
@@ -3547,7 +3298,7 @@ export const STable = defineComponent({
                       cellAttrs: null,
                       cellProps: null,
                       cellValue: null,
-                      cellRender: true
+                      cellRender: true,
                     })
                   }
                 }
@@ -3591,7 +3342,7 @@ export const STable = defineComponent({
               cellAttrs: cellAttrs,
               cellProps: cellProps,
               cellValue: cellValue,
-              cellRender: cellRender
+              cellRender: cellRender,
             })
           }
         }
@@ -3612,7 +3363,7 @@ export const STable = defineComponent({
             childrenNodes.push({
               count: record.treeChildren.length || 0,
               level: groupLevel,
-              parentKey: parentKey
+              parentKey: parentKey,
             })
 
             expandedNodes.push({
@@ -3623,11 +3374,11 @@ export const STable = defineComponent({
                   groupIndex,
                   groupLevel,
                   groupIndexs,
-                  globalIndex
-                })
+                  globalIndex,
+                }),
               ),
               level: groupLevel,
-              parentKey: parentKey
+              parentKey: parentKey,
             })
           }
 
@@ -3680,7 +3431,7 @@ export const STable = defineComponent({
               if (!expandedNode && treeChildren.length === 0) {
                 return (
                   <div
-                    class='s-table-tbody-expand-container'
+                    class="s-table-tbody-expand-container"
                     style={{ left: width + 'px' }}
                   />
                 )
@@ -3700,14 +3451,14 @@ export const STable = defineComponent({
 
                 return (
                   <div
-                    class='s-table-tbody-expand-container'
+                    class="s-table-tbody-expand-container"
                     style={{ left: width + 'px' }}
                   >
                     <div
-                      class={['s-table-tbody-expand-button', { 's-table-tbody-expand-disabled': rowExpandable }]}
+                      class={['s-table-tbody-expand-button', { 's-table-tbody-expand-disabled': !rowExpandable }]}
                       onClick={updateExpandedRowKeys}
                     >
-                      <MinusOutlined class='s-table-tbody-expand-icon'/>
+                      <MinusOutlined class="s-table-tbody-expand-icon" />
                     </div>
                   </div>
                 )
@@ -3724,17 +3475,16 @@ export const STable = defineComponent({
 
                 return (
                   <div
-                    class='s-table-tbody-expand-container'
+                    class="s-table-tbody-expand-container"
                     style={{ left: width + 'px' }}
                   >
                     <div
-                      class={['s-table-tbody-expand-button', { 's-table-tbody-expand-disabled': rowExpandable }]}
+                      class={['s-table-tbody-expand-button', { 's-table-tbody-expand-disabled': !rowExpandable }]}
                       onClick={toggleExpandedRowKeys}
                     >
-                      <PlusOutlined class='s-table-tbody-expand-icon'/>
+                      <PlusOutlined class="s-table-tbody-expand-icon" />
                     </div>
                   </div>
-
                 )
               }
             }
@@ -3742,6 +3492,10 @@ export const STable = defineComponent({
             const RenderValuerNode = (column: STableColumnType, value: any) => {
               if (!expandIcon) {
                 return value
+              }
+
+              if (expandIcon === true) {
+                expandIcon = false
               }
 
               if (!totalHasChildNode && !totalHasExpandNode) {
@@ -3759,10 +3513,10 @@ export const STable = defineComponent({
 
               return (
                 <div
-                  class='s-table-tbody-valuer-container'
+                  class="s-table-tbody-valuer-container"
                   style={{ marginLeft: width + 'px' }}
                 >
-                  { (expandIcon = false) || value }
+                  { value }
                 </div>
               )
             }
@@ -3777,13 +3531,13 @@ export const STable = defineComponent({
                   small: '8px 5px',
                   middle: '12px 7px',
                   default: '16px 6px',
-                  large: '16px 6px'
+                  large: '16px 6px',
                 }
 
                 const style: any = {
                   padding: store[Normalizer.size.value] || '16px 6px',
                   textAlign: 'center',
-                  ...props.tBodyerTdStyle
+                  ...props.tBodyerTdStyle,
                 }
 
                 if (Computer.fixedLeftIndex.value > -1) {
@@ -3791,7 +3545,7 @@ export const STable = defineComponent({
                     'text-align': 'center',
                     'position': 'sticky',
                     'left': '0px',
-                    'z-index': 5
+                    'z-index': 5,
                   })
                 }
 
@@ -3806,33 +3560,36 @@ export const STable = defineComponent({
                   }
 
                   if (props.selectedRowMode === 'Checkbox' && !checked) {
-                    checkStrictly || selectedRowKeys.value.splice(0, selectedRowKeys.value.length, ...selectedKeys.filter(key => key !== rowKey && !parentKeys?.includes(key) && !childKeys.includes(key) || disableKeys.includes(key)))
                     checkStrictly && selectedRowKeys.value.splice(0, selectedRowKeys.value.length, ...selectedKeys.filter(key => key !== rowKey || disableKeys.includes(key)))
+                    checkStrictly || selectedRowKeys.value.splice(0, selectedRowKeys.value.length, ...selectedKeys.filter(key => key !== rowKey && !parentKeys?.includes(key) && !childKeys.includes(key) || disableKeys.includes(key)))
                     Emiter.select([...selectedRowKeys.value], selectedRowKeys.value.map(key => Methoder.getValue(listSources.value.find(record => record.key === key)?.referRecord || null)))
                   }
 
                   if (props.selectedRowMode === 'Checkbox' && checked) {
-                    checkStrictly || selectedRowKeys.value.splice(0, selectedRowKeys.value.length, ...selectedKeys, ...childKeys.filter(key => !disableKeys.includes(key)), rowKey)
                     checkStrictly && selectedRowKeys.value.splice(0, selectedRowKeys.value.length, ...selectedKeys, rowKey)
+                    checkStrictly || selectedRowKeys.value.splice(0, selectedRowKeys.value.length, ...selectedKeys, ...childKeys.filter(key => !disableKeys.includes(key)), rowKey)
+                  }
 
+                  if (props.selectedRowMode === 'Checkbox' && !checkStrictly) {
                     const allSourceKeys = listSources.value.filter(() => true)
                     const allReverseKeys = [...allSourceKeys].reverse()
 
                     for (const record of allReverseKeys) {
                       const rowKey = record.key
-                      const childKeys = record.childKeys.filter(key => enableKeys.includes(key))
+                      const childKeys = record.childKeys
+                      const filterKeys = childKeys.filter(key => enableKeys.includes(key))
 
                       if (disableKeys.includes(rowKey) || selectedRowKeys.value.includes(rowKey)) {
                         continue
                       }
 
-                      if (childKeys.length > 0 && childKeys.every(key => selectedRowKeys.value.includes(key))) {
+                      if (filterKeys.length > 0 && filterKeys.every(key => selectedRowKeys.value.includes(key))) {
                         selectedRowKeys.value.push(rowKey)
                       }
                     }
-
-                    Emiter.select([...selectedRowKeys.value], selectedRowKeys.value.map(key => Methoder.getValue(listSources.value.find(record => record.key === key)?.referRecord || null)))
                   }
+
+                  Emiter.select([...selectedRowKeys.value], selectedRowKeys.value.map(key => Methoder.getValue(listSources.value.find(record => record.key === key)?.referRecord || null)))
                 }
 
                 return (
@@ -3866,7 +3623,7 @@ export const STable = defineComponent({
                     rowIndex: record.rowIndex,
                     cachers: cellCachers,
                     spikers: cellSpikers,
-                    empters: cellEmpters
+                    empters: cellEmpters,
                   })
 
                   const cellRender = options.cacher.cellRender
@@ -3888,33 +3645,41 @@ export const STable = defineComponent({
                     const options = {
                       value: cellValue,
                       record: referRecord,
+                      column,
+                      colIndex,
                       rowIndex,
                       groupIndex,
                       groupLevel,
                       groupIndexs,
                       globalIndex,
-                      column,
-                      colIndex
+                      scroller: {
+                        top: Optionser.resizerScrollTop.value,
+                        left: Optionser.resizerScrollLeft.value,
+                        right: Optionser.resizerScrollRight.value,
+                        bottom: Optionser.resizerScrollBottom.value,
+                      },
+                      paginater: Paginator.paginate,
                     }
 
                     const fixeder = {
                       colOffset: colOffset - colSpan,
-                      colSpan: colSpan
+                      colSpan: colSpan,
                     }
 
-                    const computeValue = cellEmpters.has(colIndex) ? null
+                    const computeValue = cellEmpters.has(colIndex)
+                      ? null
                       : !Methoder.isVueNode(cellValue) && helper.isFunction(ctx.slots.bodyerCell)
-                        ? Methoder.getVNodes(renderSlot(ctx.slots, 'bodyerCell', options)) ?? cellValue
-                        : cellValue
+                          ? Methoder.getVNodes(renderSlot(ctx.slots, 'bodyerCell', options)) ?? cellValue
+                          : cellValue
 
                     return (
                       <td
                         rowspan={rowSpan}
                         colspan={colSpan}
                         style={{ ...Render.computeTableChildStyle(column, fixeder, 'tbody'), ...props.tBodyerTdStyle }}
-                        { ...Render.computeTableChildAttrs(cellAttrs, 'tbody') }
-                        { ...Render.computeTableChildProps(cellProps, 'tbody') }
-                        class={'s-table-tbody-td'}
+                        {...Render.computeTableChildAttrs(cellAttrs, 'tbody')}
+                        {...Render.computeTableChildProps(cellProps, 'tbody')}
+                        class="s-table-tbody-td"
                         col-index={column.colIndex}
                         col-offset={column.colOffset}
                         row-global-index={globalIndex}
@@ -3925,7 +3690,7 @@ export const STable = defineComponent({
                         { RenderExpandIcon(column) }
 
                         <SEllipsis
-                          visible={(helper.isBoolean(cellProps?.tooltip) ? cellProps?.tooltip : column.tooltip === true) ? undefined : false}
+                          open={(helper.isBoolean(cellProps?.tooltip) ? cellProps?.tooltip : column.tooltip === true) ? undefined : false}
                           tooltip={(helper.isBoolean(cellProps?.tooltip) ? cellProps?.tooltip : column.tooltip === true) || (helper.isBoolean(cellProps?.ellipsis) ? cellProps?.ellipsis : column.ellipsis === true)}
                           ellipsis={(helper.isBoolean(cellProps?.tooltip) ? cellProps?.tooltip : column.tooltip === true) || (helper.isBoolean(cellProps?.ellipsis) ? cellProps?.ellipsis : column.ellipsis === true)}
                         >
@@ -3943,7 +3708,7 @@ export const STable = defineComponent({
               if (!rowExpandedByClick || !rowExpandedRender) {
                 return (
                   <tr
-                    { ...Methoder.getValue(sourceRowAttrs.value[globalIndex]) }
+                    {...Methoder.getValue(sourceRowAttrs.value[globalIndex])}
                     row-global-index={record.rowGlobalIndex}
                     row-group-index={record.rowGroupIndex}
                     row-group-level={record.rowGroupLevel}
@@ -3975,12 +3740,12 @@ export const STable = defineComponent({
                     }
 
                     event.stopPropagation()
-                  }
+                  },
                 }
 
                 return (
                   <tr
-                    { ...Methoder.getValue(sourceRowAttrs.value[globalIndex]) }
+                    {...Methoder.getValue(sourceRowAttrs.value[globalIndex])}
                     class={['s-table-tbody-tr', 's-table-tbody-click-tr']}
                     row-global-index={record.rowGlobalIndex}
                     row-group-index={record.rowGroupIndex}
@@ -4017,7 +3782,7 @@ export const STable = defineComponent({
                 const tdStyle: any = {
                   'position': 'relative',
                   'z-index': 8,
-                  ...props.expandTdStyle
+                  ...props.expandTdStyle,
                 }
 
                 const divStyle: any = {
@@ -4027,7 +3792,7 @@ export const STable = defineComponent({
                   'align-items': 'flex-start',
                   'width': '100%',
                   'height': '100%',
-                  'padding-left': (props.expandIndentSize > 0 ? props.expandIndentSize : totalWidth) + 'px'
+                  'padding-left': (props.expandIndentSize >= 0 ? props.expandIndentSize : totalWidth) + 'px',
                 }
 
                 return (
@@ -4057,10 +3822,10 @@ export const STable = defineComponent({
             }
 
             return (
-              <>
+              <Fragment>
                 { RenderSourceNode() }
                 { RenderExpandNode() }
-              </>
+              </Fragment>
             )
           })
         }
@@ -4085,13 +3850,13 @@ export const STable = defineComponent({
                 small: '8px 5px',
                 middle: '12px 7px',
                 default: '16px 6px',
-                large: '16px 6px'
+                large: '16px 6px',
               }
 
               const style: any = {
                 padding: store[Normalizer.size.value] || '16px 6px',
                 textAlign: 'center',
-                ...props.tBodyerTdStyle
+                ...props.tBodyerTdStyle,
               }
 
               if (Computer.fixedLeftIndex.value > -1) {
@@ -4099,7 +3864,7 @@ export const STable = defineComponent({
                   'text-align': 'center',
                   'position': 'sticky',
                   'left': '0px',
-                  'z-index': 5
+                  'z-index': 5,
                 })
               }
 
@@ -4120,7 +3885,7 @@ export const STable = defineComponent({
                 if (column) {
                   const fixeder = {
                     colOffset: colOffset++,
-                    colSpan: 1
+                    colSpan: 1,
                   }
 
                   return (
@@ -4164,7 +3929,7 @@ export const STable = defineComponent({
           Object.assign(style, {
             'position': 'sticky',
             'bottom': /^\+?\d+\.?\d*$/.test(`${bottomFooter}`) ? `${(bottomFooter as number) + (visible ? height : 0)}px` : `${visible ? height : 0}px`,
-            'z-index': 80
+            'z-index': 80,
           })
         }
 
@@ -4223,7 +3988,7 @@ export const STable = defineComponent({
                     cellAttrs: null,
                     cellProps: null,
                     cellValue: null,
-                    cellRender: true
+                    cellRender: true,
                   })
                 }
               }
@@ -4240,7 +4005,7 @@ export const STable = defineComponent({
                     cellAttrs: null,
                     cellProps: null,
                     cellValue: null,
-                    cellRender: false
+                    cellRender: false,
                   })
                 }
               }
@@ -4261,7 +4026,7 @@ export const STable = defineComponent({
                       cellAttrs: null,
                       cellProps: null,
                       cellValue: null,
-                      cellRender: true
+                      cellRender: true,
                     })
                   }
                 }
@@ -4279,7 +4044,7 @@ export const STable = defineComponent({
               cellAttrs: cellAttrs,
               cellProps: cellProps,
               cellValue: cellValue,
-              cellRender: cellRender
+              cellRender: cellRender,
             })
           }
         }
@@ -4300,8 +4065,8 @@ export const STable = defineComponent({
 
                 return (
                   <tr
-                    { ...Methoder.getValue(summaryRowAttrs.value[rowIndex]) }
-                    class={'s-table-tfoot-tr'}
+                    {...Methoder.getValue(summaryRowAttrs.value[rowIndex])}
+                    class="s-table-tfoot-tr"
                     row-index={rowIndex}
                   >
                     {
@@ -4312,7 +4077,7 @@ export const STable = defineComponent({
                           rowIndex: rowIndex,
                           cachers: cellCachers,
                           spikers: cellSpikers,
-                          empters: cellEmpters
+                          empters: cellEmpters,
                         })
 
                         const cellRender = options.cacher.cellRender
@@ -4330,42 +4095,48 @@ export const STable = defineComponent({
                           const array = Computer.filterPageSources.value.filter(refer => refer.rowGroupLevel === 1)
                           const column = filterColumns.find(col => col.colIndex === refer.colIndex)!
                           const sources = array.map(refer => refer.referRecord)
-                          const paginate = Paginator.paginate
 
                           const options = {
                             value: cellValue,
-                            record: summary,
                             column: column,
+                            record: summary,
+                            sources: sources,
                             rowIndex: rowIndex,
                             colIndex: colIndex,
-                            paginate: paginate,
-                            sources: sources
+                            scroller: {
+                              top: Optionser.resizerScrollTop.value,
+                              left: Optionser.resizerScrollLeft.value,
+                              right: Optionser.resizerScrollRight.value,
+                              bottom: Optionser.resizerScrollBottom.value,
+                            },
+                            paginater: Paginator.paginate,
                           }
 
                           const fixeder = {
                             colOffset: colOffset - colSpan,
-                            colSpan: colSpan
+                            colSpan: colSpan,
                           }
 
-                          const computeValue = cellEmpters.has(colIndex) ? null
+                          const computeValue = cellEmpters.has(colIndex)
+                            ? null
                             : !Methoder.isVueNode(cellValue) && helper.isFunction(ctx.slots.footerCell)
-                              ? Methoder.getVNodes(renderSlot(ctx.slots, 'footerCell', options)) ?? cellValue
-                              : cellValue
+                                ? Methoder.getVNodes(renderSlot(ctx.slots, 'footerCell', options)) ?? cellValue
+                                : cellValue
 
                           return (
                             <td
                               rowspan={rowSpan}
                               colspan={colSpan + (colPrefix > 0 ? colPrefix-- : 0)}
                               style={{ ...Render.computeTableChildStyle(column, fixeder, 'tfoot'), ...props.tFooterTdStyle }}
-                              { ...Render.computeTableChildAttrs(cellAttrs, 'tfoot') }
-                              { ...Render.computeTableChildProps(cellProps, 'tfoot') }
-                              class={'s-table-tfoot-td'}
+                              {...Render.computeTableChildAttrs(cellAttrs, 'tfoot')}
+                              {...Render.computeTableChildProps(cellProps, 'tfoot')}
+                              class="s-table-tfoot-td"
                               col-index={column.colIndex}
                               col-offset={column.colOffset}
                               row-index={rowIndex}
                             >
                               <SEllipsis
-                                visible={(helper.isBoolean(cellProps?.tooltip) ? cellProps?.tooltip : column.tooltip === true) ? undefined : false}
+                                open={(helper.isBoolean(cellProps?.tooltip) ? cellProps?.tooltip : column.tooltip === true) ? undefined : false}
                                 tooltip={(helper.isBoolean(cellProps?.tooltip) ? cellProps?.tooltip : column.tooltip === true) || (helper.isBoolean(cellProps?.ellipsis) ? cellProps?.ellipsis : column.ellipsis === true)}
                                 ellipsis={(helper.isBoolean(cellProps?.tooltip) ? cellProps?.tooltip : column.tooltip === true) || (helper.isBoolean(cellProps?.ellipsis) ? cellProps?.ellipsis : column.ellipsis === true)}
                               >
@@ -4392,7 +4163,7 @@ export const STable = defineComponent({
         const style: any = {
           position: 'relative',
           zIndex: 1000,
-          ...props.paginateStyle
+          ...props.paginateStyle,
         }
 
         const bottomFooter = Normalizer.sticky.value.bottomFooter
@@ -4402,14 +4173,14 @@ export const STable = defineComponent({
           Object.assign(style, {
             position: 'sticky',
             bottom: /^\+?\d+\.?\d*$/.test(`${paginateFixed}`) ? `${paginateFixed}px` : 0,
-            left: 0
+            left: 0,
           })
         }
 
         return (
           <STablePaginater
-            { ...Paginator.paginate }
-            size={ Normalizer.size.value === 'default' ? 'default' : 'small' }
+            {...Paginator.paginate}
+            size={Normalizer.size.value === 'default' ? 'default' : 'small'}
             onPageSizeChange={Emiter.pageSizeChange}
             onPageChange={Emiter.pageChange}
             style={style}
@@ -4421,12 +4192,12 @@ export const STable = defineComponent({
         if (Normalizer.sticky.value.bottomScrollbar !== true) {
           return
         }
-        return <STableScrollbar { ...Computer.scrollbar.value }/>
+        return <STableScrollbar {...Computer.scrollbar.value} />
       }
 
       const RenderTableCursor = () => {
         if (!Optionser.cursor.visible) {
-          return <></>
+          return
         }
 
         return (
@@ -4441,7 +4212,7 @@ export const STable = defineComponent({
 
       const RenderTableDragger = () => {
         if (!Optionser.dragger.visible) {
-          return <></>
+          return
         }
 
         return (
@@ -4458,7 +4229,7 @@ export const STable = defineComponent({
       }
 
       const WrapperMousedown = (event: MouseEvent) => {
-        if (!(event.target instanceof HTMLElement)) {
+        if (typeof HTMLElement === 'undefined' || !(event.target instanceof HTMLElement)) {
           return
         }
 
@@ -4495,7 +4266,7 @@ export const STable = defineComponent({
                       width: $recter.width,
                       minWidth: helper.isFiniteNumber(column.minWidth) && column.minWidth > 0 ? column.minWidth : 0,
                       maxWidth: helper.isFiniteNumber(column.maxWidth) && column.maxWidth > 0 ? column.maxWidth : Number.MAX_SAFE_INTEGER,
-                      column: column
+                      column: column,
                     })
                   }
 
@@ -4557,26 +4328,26 @@ export const STable = defineComponent({
         's-border-table': Computer.hasBorder.value,
         's-header-table': Computer.hasHeader.value,
         's-bodyer-table': Computer.hasBodyer.value,
-        's-footer-table': Computer.hasFooter.value
+        's-footer-table': Computer.hasFooter.value,
       }
 
       const WrapperTableStyle = {
         tableLayout: !['fixed', 'auto'].includes(props.tableLayout)
-          ? dataColumns.value.length > 1 ? 'auto' : 'fixed'
-          : props.tableLayout
+          ? listColumns.value.length > 1 ? 'auto' : 'fixed'
+          : props.tableLayout,
       }
 
       const WrapperScollerStyle = {
         width: Computer.tableBodyWidth.value,
         maxHeight: Computer.tableBodyHeight.value,
         minWidth: Computer.tableBodyWidth.value !== 'auto' && !(['fit-content', 'max-content'].includes(Computer.tableBodyWidth.value)) ? '0px' : '100%',
-        overflow: Computer.tableBodyOverflow.value ?? (Computer.tableBodyWidth.value !== '100%' || Computer.tableBodyHeight.value !== 'auto' ? 'auto' : 'visible')
+        overflow: Computer.tableBodyOverflow.value ?? (Computer.tableBodyWidth.value !== '100%' || Computer.tableBodyHeight.value !== 'auto' ? 'auto' : 'visible'),
       }
 
       return (
         <div
           ref={Optionser.refTableWrapper}
-          class={'s-nested-table-wrapper'}
+          class="s-nested-table-wrapper"
           style={WrapperScollerStyle} // @ts-ignore
           onScrollPassive={Eventer.updateWrapperContainer}
           onMousedown={WrapperMousedown}
@@ -4603,7 +4374,7 @@ export const STable = defineComponent({
     const RenderTableContianer = (ctx: typeof context) => {
       const RenderTableSettings = (_: typeof context) => {
         if (!props.columnPresetSettings) {
-          return <></>
+          return
         }
 
         const currentAllKeys = Methoder.getValue(columnSettingsAllKeys)
@@ -4621,7 +4392,7 @@ export const STable = defineComponent({
           if (isFixedTop || topHeader === true || helper.isFiniteNumber(topHeader)) {
             Object.assign(style, {
               position: 'sticky',
-              top: /^\+?\d+\.?\d*$/.test(`${topHeader}`) ? `${topHeader}px` : 0
+              top: /^\+?\d+\.?\d*$/.test(`${topHeader}`) ? `${topHeader}px` : 0,
             })
           }
         }
@@ -4653,7 +4424,7 @@ export const STable = defineComponent({
             refChildNodes[index] = temChildNodes.find(col => {
               return (
                 col.referColumn.rowIndex === node.column.rowIndex &&
-                  col.referColumn.colIndex === node.column.colIndex
+                col.referColumn.colIndex === node.column.colIndex
               )
             })!
           }
@@ -4685,13 +4456,30 @@ export const STable = defineComponent({
 
       const refTableContainerStyle = {
         width: ['fit-content', 'max-content'].includes(Computer.tableBodyWidth.value) && Computer.tableBodyOverflow.value === 'visible' ? 'fit-content' : '100%',
-        minWidth: ['fit-content', 'max-content'].includes(Computer.tableBodyWidth.value) && Computer.tableBodyOverflow.value === 'visible' ? '100%' : '0'
+        minWidth: ['fit-content', 'max-content'].includes(Computer.tableBodyWidth.value) && Computer.tableBodyOverflow.value === 'visible' ? '100%' : '0',
+      }
+
+      const refTableVariablerStyle = {
+        '--table-padding-vertical': token.value.padding + 'px',
+        '--table-padding-horizontal': token.value.padding + 'px',
+        '--table-padding-vertical-middle': token.value.paddingSM + 'px',
+        '--table-padding-horizontal-middle': token.value.paddingXS + 'px',
+        '--table-padding-vertical-small': token.value.paddingXS + 'px',
+        '--table-padding-horizontal-small': token.value.paddingXS + 'px',
+
+        '--table-primary-color': token.value.colorPrimary,
+        '--table-background-color': token.value.colorBgContainer,
+        '--table-border-color': token.value.colorBorderSecondary,
+
+        '--table-thead-color': new TinyColor(token.value.colorFillAlter)
+          .onBackground(token.value.colorBgContainer)
+          .toHexString(),
       }
 
       return (
         <section
           ref={Optionser.refTableContainer}
-          style={refTableContainerStyle}
+          style={{ ...refTableContainerStyle, ...refTableVariablerStyle }}
           class={['s-table-container', `s-${Normalizer.size.value}-table-container`]}
         >
           <div class={['s-table-spining-container', { spining: loading }]}>
@@ -4705,8 +4493,7 @@ export const STable = defineComponent({
 
     return () => RenderTableContianer(context)
   },
-  slots: {} as STableeDefineSlots<STableRecordType>,
-  methods: {} as STableDefineMethods
+  methods: {} as STableDefineMethods,
 })
 
 export const tableCustomHeaderRowAttrsDefiner = (customHeaderRowAttrs: STableCustomHeaderRowAttrs) => customHeaderRowAttrs
@@ -4730,6 +4517,8 @@ export const tableColumnsDefiner = (columns: STablePartColumnType[]) => ref(colu
 export const tablePaginateDefiner = (paginate: STablePartPaginate) => ref(paginate)
 export const tableStickyDefiner = (sticky: STablePartStickyType) => ref(sticky)
 export const tableScrollDefiner = (scroll: STablePartScrollType) => ref(scroll)
+export const tableSorterDefiner = (sorter: STableSorterType[]) => ref(sorter)
 
+export type * from './type'
+export * from './preset'
 export default STable
-export * from './res'

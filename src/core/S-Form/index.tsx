@@ -1,16 +1,13 @@
 import './index.less'
-import 'ant-design-vue/es/grid/style/index.less'
-import 'ant-design-vue/es/spin/style/index.less'
-import 'ant-design-vue/es/form/style/index.less'
 
 import * as VueTypes from 'vue-types'
 import Normalize from './form.normalize'
 import SFormComponent from './index.component'
 import { SFormValidatorRule } from './form.declare'
-import { SFormGrid, SFormColItem, SFormColPartItem, SFormRowItem, SFormRowPartItem, SFormGroupItem, SFormGroupPartItem } from './form.declare'
-import { SlotsType, Ref, defineComponent, watchEffect, watch, shallowRef, toRaw, unref, ref, readonly, PropType, inject } from 'vue'
+import { SFormGrid, SFormColItem, SFormColPartItem, SFormColSlotItem, SFormRowItem, SFormRowPartItem, SFormRowSlotItem, SFormGroupItem, SFormGroupPartItem, SFormGroupSlotItem } from './form.declare'
+import { SlotsType, Ref, defineComponent, watchEffect, watch, shallowRef, toRaw, unref, ref, readonly, PropType } from 'vue'
 import { Rule, NamePath, InternalNamePath, ValidateOptions } from 'ant-design-vue/es/form/interface'
-import { defaultConfigProvider } from 'ant-design-vue/es/config-provider'
+import { useConfigContextInject } from 'ant-design-vue/es/config-provider/context'
 import AForm, { FormItem as AFormItem } from 'ant-design-vue/es/form'
 import ASpin from 'ant-design-vue/es/spin'
 import ARow from 'ant-design-vue/es/row'
@@ -33,15 +30,11 @@ interface SFormGroupsProps {
   groups: SFormGroupItem[];
 }
 
-interface SFormGroupsRules<T> {
-  [key: string]: T | T[] | SFormGroupsRules<T>
-}
-
 type SFormWatchHandler = () => void
 type SFormItemsHandler = (groups: Array<SFormColPartItem | SFormRowPartItem | SFormGroupPartItem>) => SFormColItem[]
 type SFormGroupsHandler = (groups: Array<SFormGroupPartItem | SFormRowPartItem | SFormColPartItem>) => SFormGroupItem[]
-type SFormModelHandler = (item: SFormColItem, options: { first: boolean, oldModel: Record<string, any>, newModel: Record<string, any>, refModel: Ref<Record<string, any>> }) => void
-type SFormSyncHandler = (item: SFormColItem, options: { syncModel: Record<string, any>, refModel: Ref<Record<string, any>> }) => void
+type SFormModelHandler = (item: SFormColItem, options: { first: boolean; oldModel: Record<string, any>; newModel: Record<string, any>; refModel: Ref<Record<string, any>>; }) => void
+type SFormSyncHandler = (item: SFormColItem, options: { syncModel: Record<string, any>; refModel: Ref<Record<string, any>>; }) => void
 
 type SFormDefineMethods = {
   resetFields: (name?: NamePath) => void;
@@ -49,14 +42,14 @@ type SFormDefineMethods = {
   getFieldsValue: (nameList?: InternalNamePath[] | true) => { [key: string]: any; };
   validateFields: (nameList?: NamePath[] | string, options?: ValidateOptions) => Promise<{ [key: string]: any; }>;
   validate: (nameList?: NamePath[] | string, options?: ValidateOptions) => Promise<{ [key: string]: any; }>;
-  scrollToField: (name: NamePath, options?: {}) => void;
+  scrollToField: (name: NamePath, options?: object) => void;
 }
 
 type SFormDefineSlots = SlotsType<{
   after: void;
   before: void;
-  [slot: `s-header-${string}`]: { className: string; group: SFormGroupItem; disabled: boolean; readonly: boolean; };
-  [slot: `s-component-${string}`]: { col: SFormColItem; row: SFormRowItem; group: SFormGroupItem; attrs: Record<string, any>; slots: Record<string, any>; disabled: boolean; readonly: boolean; source: Record<string, any>; field: string; };
+  [slot: `s-header-${string}`]: { className: string; group: SFormGroupSlotItem; disabled: boolean; readonly: boolean; };
+  [slot: `s-component-${string}`]: { col: SFormColSlotItem; row: SFormRowSlotItem; group: SFormGroupSlotItem; attrs: Record<string, any>; slots: Record<string, any>; disabled: boolean; readonly: boolean; source: Record<string, any>; field: string; };
   [slot: string]: any;
 }>
 
@@ -65,10 +58,11 @@ export * from './form.helper'
 
 export const SForm = defineComponent({
   name: 'SForm',
+  inheritAttrs: false,
   props: {
     rules: {
       type: Object as PropType<Record<string, Rule | SFormValidatorRule | Array<Rule | SFormValidatorRule>>>,
-      default: () => ({})
+      default: () => ({}),
     },
     grid: VueTypes.object<Partial<SFormGrid>>().def(() => ({})),
     border: VueTypes.any<string | boolean>().def(false),
@@ -77,8 +71,9 @@ export const SForm = defineComponent({
     model: VueTypes.object().def(() => undefined),
     disabled: VueTypes.bool().def(false),
     readonly: VueTypes.bool().def(false),
-    spinning: VueTypes.bool().def(false)
+    spinning: VueTypes.bool().def(false),
   },
+  slots: {} as SFormDefineSlots,
   setup(props, context) {
     const watchHandler: SFormWatchHandler = () => {
       const propModel = props.modelValue
@@ -110,18 +105,18 @@ export const SForm = defineComponent({
 
           default: {
             input: node?.default?.input || helper.isFunction(Normalize[node.type].default.input) ? Normalize[node.type].default.input : helper.deepClone(Normalize[node.type].default.input),
-            output: node?.default?.output || helper.isFunction(Normalize[node.type].default.output) ? Normalize[node.type].default.output : helper.deepClone(Normalize[node.type].default.output)
+            output: node?.default?.output || helper.isFunction(Normalize[node.type].default.output) ? Normalize[node.type].default.output : helper.deepClone(Normalize[node.type].default.output),
           },
 
           transfer: {
             input: node?.transfer?.input || Normalize[node.type].transfer.input,
-            output: node?.transfer?.output || Normalize[node.type].transfer.output
+            output: node?.transfer?.output || Normalize[node.type].transfer.output,
           },
 
           readonly: node.readonly !== undefined ? node.readonly : Normalize[node.type].readonly,
           disabled: node.disabled !== undefined ? node.disabled : Normalize[node.type].disabled,
           render: node.render !== undefined ? node.render : Normalize[node.type].render,
-          show: node.show !== undefined ? node.show : Normalize[node.type].show
+          show: node.show !== undefined ? node.show : Normalize[node.type].show,
         }
       })
     }
@@ -134,11 +129,12 @@ export const SForm = defineComponent({
         grid: {},
         slot: '',
         label: '',
+        field: '',
         items: [],
         readonly: false,
         disabled: false,
         render: true,
-        show: true
+        show: true,
       }
 
       let row: SFormRowItem = {
@@ -146,7 +142,7 @@ export const SForm = defineComponent({
         grid: {},
         items: [],
         readonly: false,
-        disabled: false
+        disabled: false,
       }
 
       for (const node of parts) {
@@ -156,12 +152,13 @@ export const SForm = defineComponent({
             grid: node.grid || group.grid || {},
             slot: node.slot || '',
             label: node.label || '',
+            field: node.field || '',
             items: [],
             border: node.border,
             disabled: node.disabled !== undefined ? node.disabled : false,
-            readonly: node.disabled !== undefined ? node.disabled : false,
+            readonly: node.readonly !== undefined ? node.readonly : false,
             render: node.render !== undefined ? node.render : true,
-            show: node.show !== undefined ? node.show : true
+            show: node.show !== undefined ? node.show : true,
           }
 
           row = {
@@ -169,7 +166,7 @@ export const SForm = defineComponent({
             grid: node.grid || row.grid || group.grid || {},
             items: [],
             readonly: false,
-            disabled: false
+            disabled: false,
           }
         }
 
@@ -179,7 +176,7 @@ export const SForm = defineComponent({
             grid: node.grid || row.grid || {},
             items: [],
             disabled: node.disabled !== undefined ? node.disabled : false,
-            readonly: node.disabled !== undefined ? node.disabled : false
+            readonly: node.readonly !== undefined ? node.readonly : false,
           }
         }
 
@@ -199,18 +196,18 @@ export const SForm = defineComponent({
 
             default: {
               input: node?.default?.input || Normalize[node.type].default.input,
-              output: node?.default?.output || Normalize[node.type].default.output
+              output: node?.default?.output || Normalize[node.type].default.output,
             },
 
             transfer: {
               input: node?.transfer?.input || Normalize[node.type].transfer.input,
-              output: node?.transfer?.output || Normalize[node.type].transfer.output
+              output: node?.transfer?.output || Normalize[node.type].transfer.output,
             },
 
             readonly: node.readonly !== undefined ? node.readonly : Normalize[node.type].readonly,
             disabled: node.disabled !== undefined ? node.disabled : Normalize[node.type].disabled,
             render: node.render !== undefined ? node.render : Normalize[node.type].render,
-            show: node.show !== undefined ? node.show : Normalize[node.type].show
+            show: node.show !== undefined ? node.show : Normalize[node.type].show,
           }
 
           row.items.includes(col) || row.items.push(col)
@@ -309,22 +306,22 @@ export const SForm = defineComponent({
       const attrs = {
         border: border !== false && border !== 'no'
           ? undefined
-          : 'no'
+          : 'no',
       }
 
       if (group.label || group.slot) {
         return (
-          <div class='s-form-group-item-header' {...attrs}>
+          <div class="s-form-group-item-header" {...attrs}>
             {
               slotRender
-                ? slotRender({ className: className, group, disabled, readonly })
-                : <div class='s-form-group-item-header-title'>{group.label}</div>
+                ? slotRender({ className: className, group, disabled, readonly } as any)
+                : <div class="s-form-group-item-header-title">{group.label}</div>
             }
           </div>
         )
       }
 
-      return <div/>
+      return <div />
     }
 
     const GroupContentRender = (opt: SFormProps & SFormGroupProps, ctx: typeof context) => {
@@ -333,7 +330,7 @@ export const SForm = defineComponent({
           type: row.grid.type || group.grid.type || opt.grid.type,
           align: row.grid.align || group.grid.align || opt.grid.align,
           gutter: row.grid.gutter || group.grid.gutter || opt.grid.gutter,
-          justify: row.grid.justify || group.grid.justify || opt.grid.justify
+          justify: row.grid.justify || group.grid.justify || opt.grid.justify,
         }
       }
 
@@ -351,7 +348,7 @@ export const SForm = defineComponent({
           lg: col.grid.lg || row.grid.lg || group.grid.lg || opt.grid.lg,
           md: col.grid.md || row.grid.md || group.grid.md || opt.grid.md,
           sm: col.grid.sm || row.grid.sm || group.grid.sm || opt.grid.sm,
-          xs: col.grid.xs || row.grid.xs || group.grid.xs || opt.grid.xs
+          xs: col.grid.xs || row.grid.xs || group.grid.xs || opt.grid.xs,
         }
       }
 
@@ -360,20 +357,20 @@ export const SForm = defineComponent({
           unref(opt.disabled),
           unref(group.disabled),
           unref(row.disabled),
-          helper.isBoolean(unref(col.props.disabled)) ? unref(col.props.disabled) : unref(col.disabled)
+          helper.isBoolean(unref(col.props.disabled)) ? unref(col.props.disabled) : unref(col.disabled),
         ].includes(true)
 
         const readonly = [
           unref(opt.readonly),
           unref(group.readonly),
           unref(row.readonly),
-          helper.isBoolean(unref(col.props.readonly)) ? unref(col.props.readonly) : unref(col.readonly)
+          helper.isBoolean(unref(col.props.readonly)) ? unref(col.props.readonly) : unref(col.readonly),
         ].includes(true)
 
         return {
           ...col.layer,
           'disabled': readonly || disabled,
-          'off-disabled': readonly && !disabled || undefined
+          'off-disabled': readonly && !disabled || undefined,
         }
       }
 
@@ -382,23 +379,23 @@ export const SForm = defineComponent({
           unref(opt.disabled),
           unref(group.disabled),
           unref(row.disabled),
-          helper.isBoolean(unref(col.props.disabled)) ? unref(col.props.disabled) : unref(col.disabled)
+          helper.isBoolean(unref(col.props.disabled)) ? unref(col.props.disabled) : unref(col.disabled),
         ].includes(true)
 
         const readonly = [
           unref(opt.readonly),
           unref(group.readonly),
           unref(row.readonly),
-          helper.isBoolean(unref(col.props.readonly)) ? unref(col.props.readonly) : unref(col.readonly)
+          helper.isBoolean(unref(col.props.readonly)) ? unref(col.props.readonly) : unref(col.readonly),
         ].includes(true)
 
         return {
-          disabled: readonly || disabled
+          disabled: readonly || disabled,
         }
       }
 
       return (
-        <div class='s-form-group-item-content'>
+        <div class="s-form-group-item-content">
           {
             opt.group.items
               .filter(row => row.items.some(col => unref(col.render)))
@@ -412,15 +409,15 @@ export const SForm = defineComponent({
                       .filter(col => unref(col.render))
                       .map(col => {
                         const group = opt.group
-                        const disabled = opt.disabled
-                        const readonly = opt.readonly
-                        const provider = inject('configProvider', defaultConfigProvider)
+                        const disabled = [unref(opt.disabled), unref(group.disabled), unref(row.disabled), helper.isBoolean(unref(col.props.disabled)) ? unref(col.props.disabled) : unref(col.disabled)].includes(true)
+                        const readonly = [unref(opt.readonly), unref(group.readonly), unref(row.readonly), helper.isBoolean(unref(col.props.readonly)) ? unref(col.props.readonly) : unref(col.readonly)].includes(true)
                         const slotRender = ctx.slots[`s-component-${col.slot.replace(/^s-component-/, '')}`]
+                        const provider = useConfigContextInject()
 
                         const type = col.type
                         const slots = col.slots
                         const states = handleStateBind(col, row, group)
-                        const attrs = Object.fromEntries(Object.entries({ size: provider.componentSize, ...col.props, ...states }).map(([key, value]) => [key, unref(value)]))
+                        const attrs = Object.fromEntries(Object.entries({ size: provider.componentSize?.value, ...col.props, ...states }).map(([key, value]) => [key, unref(value)]))
                         const source = col.field.slice(0, -1).reduce((model, key) => model[key], opt.model)
                         const field = col.field[col.field.length - 1]
 
@@ -431,15 +428,15 @@ export const SForm = defineComponent({
                           >
                             <AFormItem
                               {...handleItemBind(col, row, group)}
-                              class='s-form-group-item-template'
+                              class="s-form-group-item-template"
                               rules={col.layer.rules || col.rules}
                               label={col.layer.label || col.label}
                               name={col.layer.name || col.field}
                             >
                               {
                                 slotRender
-                                  ? slotRender({ col, row, group, attrs, slots, disabled, readonly, source, field })
-                                  : <SFormComponent type={type} attrs={attrs} v-slots={slots} source={source} field={field}/>
+                                  ? slotRender({ col, row, group, attrs, slots, disabled, readonly, source, field } as any)
+                                  : <SFormComponent type={type} attrs={attrs} v-slots={slots} disabled={disabled} readonly={readonly} source={source} field={field} />
                               }
                             </AFormItem>
                           </ACol>
@@ -461,7 +458,7 @@ export const SForm = defineComponent({
               .filter(group => unref(group.render))
               .map(group => (
                 <div
-                  class='s-form-group-container'
+                  class="s-form-group-container"
                   v-show={unref(group.show)}
                 >
                   <GroupHeaderRender
@@ -513,9 +510,9 @@ export const SForm = defineComponent({
       resetFields: (name?: NamePath) => form.value.resetFields(name),
       clearValidate: (name?: NamePath) => form.value.clearValidate(name),
       getFieldsValue: (nameList?: InternalNamePath[] | true) => form.value.getFieldsValue(nameList),
-      scrollToField: (name: NamePath, options?: ['auto' | 'smooth' | Function]) => form.value.scrollToField(name, options),
+      scrollToField: (name: NamePath, options?: ['auto' | 'smooth' | ((...rest: any[]) => any)]) => form.value.scrollToField(name, options),
       validateFields: (nameList?: NamePath[] | string, options?: ValidateOptions) => form.value.validateFields(nameList, options),
-      validate: (nameList?: NamePath[] | string, options?: ValidateOptions) => form.value.validate(nameList, options)
+      validate: (nameList?: NamePath[] | string, options?: ValidateOptions) => form.value.validate(nameList, options),
     })
 
     return () => {
@@ -526,7 +523,7 @@ export const SForm = defineComponent({
       const spinning = ref(props.spinning || false)
 
       return (
-        <div class='s-form-container'>
+        <div class="s-form-container">
           <ASpin spinning={spinning.value}>
             <AForm
               {...context.attrs}
@@ -554,8 +551,7 @@ export const SForm = defineComponent({
       )
     }
   },
-  slots: {} as SFormDefineSlots,
-  methods: {} as SFormDefineMethods
+  methods: {} as SFormDefineMethods,
 })
 
 export default SForm

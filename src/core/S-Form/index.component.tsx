@@ -1,22 +1,10 @@
-import * as VueTypes from 'vue-types'
-import { defineComponent, h } from 'vue'
-import { SFormType } from './form.declare'
-
 import './index.component.less'
-import 'ant-design-vue/es/rate/style/index.less'
-import 'ant-design-vue/es/radio/style/index.less'
-import 'ant-design-vue/es/input/style/index.less'
-import 'ant-design-vue/es/button/style/index.less'
-import 'ant-design-vue/es/switch/style/index.less'
-import 'ant-design-vue/es/select/style/index.less'
-import 'ant-design-vue/es/slider/style/index.less'
-import 'ant-design-vue/es/checkbox/style/index.less'
-import 'ant-design-vue/es/cascader/style/index.less'
-import 'ant-design-vue/es/date-picker/style/index.less'
-import 'ant-design-vue/es/time-picker/style/index.less'
-import 'ant-design-vue/es/tree-select/style/index.less'
-import 'ant-design-vue/es/input-number/style/index.less'
-import 'ant-design-vue/es/auto-complete/style/index.less'
+
+import * as VueTypes from 'vue-types'
+import { SFormType } from './form.declare'
+import { defineComponent } from 'vue'
+import { nextTick } from 'vue'
+import { ref, h } from 'vue'
 
 import ARate from 'ant-design-vue/es/rate'
 import ARadio from 'ant-design-vue/es/radio'
@@ -53,7 +41,7 @@ const AComponents: Record<string, any> = {
   AQuarterPicker: ADatePicker.QuarterPicker,
   AWeekPicker: ADatePicker.WeekPicker,
   ADatePicker: ADatePicker,
-  ATimePicker: ATimePicker
+  ATimePicker: ATimePicker,
 }
 
 export const SFormComponent = defineComponent({
@@ -61,16 +49,21 @@ export const SFormComponent = defineComponent({
   inheritAttrs: false,
   props: {
     type: VueTypes.string<SFormType>().isRequired,
+    disabled: VueTypes.bool().isRequired,
+    readonly: VueTypes.bool().isRequired,
     source: VueTypes.object().isRequired,
+    field: VueTypes.string().isRequired,
     attrs: VueTypes.object().isRequired,
-    field: VueTypes.string().isRequired
   },
   setup(props, context) {
     return () => {
       const type = props.type
       const field = props.field
       const source = props.source
+      const disabled = props.disabled
+      const readonly = props.readonly
       const Component = AComponents[type]
+      const component = ref(null as HTMLElement | null)
 
       let attrs: any = {}
 
@@ -78,7 +71,7 @@ export const SFormComponent = defineComponent({
         attrs = {
           'checked': source[field],
           'onUpdate:checked': (checked: any) => { source[field] = checked },
-          ...props.attrs
+          ...props.attrs,
         }
 
         attrs.size = attrs.size !== 'small'
@@ -90,7 +83,7 @@ export const SFormComponent = defineComponent({
         attrs = {
           'value': source[field],
           'onUpdate:value': (checked: any) => { source[field] = checked },
-          ...props.attrs
+          ...props.attrs,
         }
 
         attrs.size = attrs.size !== 'middle'
@@ -102,33 +95,71 @@ export const SFormComponent = defineComponent({
         attrs = {
           'value': source[field],
           'onUpdate:value': (value: any) => { source[field] = value },
-          ...props.attrs
+          ...props.attrs,
         }
       }
 
-      if (type === 'AQuarterPicker') {
-        attrs.valueFormat = 'YYYY-Q'
-        attrs.format = 'YYYY-Q'
+      if (type === 'AQuarterPicker' || (type === 'ADatePicker' && attrs.picker === 'quarter') || (type === 'ARangePicker' && attrs.picker === 'quarter')) {
+        attrs.valueFormat = attrs.valueFormat ?? 'YYYY-Q'
+        attrs.format = attrs.format ?? 'YYYY-Q'
       }
 
-      if (type === 'AMonthPicker') {
-        attrs.valueFormat = 'YYYY-MM'
-        attrs.format = 'YYYY-MM'
+      if (type === 'AMonthPicker' || (type === 'ADatePicker' && attrs.picker === 'month') || (type === 'ARangePicker' && attrs.picker === 'month')) {
+        attrs.valueFormat = attrs.valueFormat ?? 'YYYY-MM'
+        attrs.format = attrs.format ?? 'YYYY-MM'
       }
 
-      if (type === 'AYearPicker') {
-        attrs.valueFormat = 'YYYY'
-        attrs.format = 'YYYY'
+      if (type === 'AYearPicker' || (type === 'ADatePicker' && attrs.picker === 'year') || (type === 'ARangePicker' && attrs.picker === 'year')) {
+        attrs.valueFormat = attrs.valueFormat ?? 'YYYY'
+        attrs.format = attrs.format ?? 'YYYY'
       }
 
-      if (type === 'AWeekPicker') {
-        attrs.valueFormat = 'YYYY-ww'
-        attrs.format = 'YYYY-ww'
+      if (type === 'AWeekPicker' || (type === 'ADatePicker' && attrs.picker === 'week') || (type === 'ARangePicker' && attrs.picker === 'week')) {
+        attrs.valueFormat = attrs.valueFormat ?? 'YYYY-ww'
+        attrs.format = attrs.format ?? 'YYYY-ww'
       }
 
-      return Component ? h(Component, attrs, context.slots) : null
+      if (type === 'ADatePicker' || type === 'ARangePicker') {
+        attrs.valueFormat = attrs.valueFormat ?? (attrs.showTime === true ? 'YYYY-MM-DD HH:mm:ss' : 'YYYY-MM-DD')
+        attrs.format = attrs.format ?? (attrs.showTime === true ? 'YYYY-MM-DD HH:mm:ss' : 'YYYY-MM-DD')
+      }
+
+      if (type === 'ATimePicker') {
+        attrs.valueFormat = attrs.valueFormat ?? (attrs.use12Hours === true ? 'h:mm:ss a' : 'HH:mm:ss')
+        attrs.format = attrs.format ?? (attrs.use12Hours === true ? 'h:mm:ss a' : 'HH:mm:ss')
+      }
+
+      if (readonly && !disabled) {
+        nextTick(() => {
+          const selector = '[disabled],[class*="-disabled"]'
+          const elements = component.value?.querySelectorAll(selector)
+
+          elements?.forEach(element => {
+            if (typeof HTMLElement !== 'undefined' && (element instanceof HTMLElement)) {
+              for (const name of Array.from(element.classList)) {
+                if (/-disabled(\b|$)/.test(name)) {
+                  element.classList.remove(name)
+                }
+              }
+
+              if (element.hasAttribute('disabled')) {
+                element.removeAttribute('disabled')
+              }
+            }
+          })
+        })
+      }
+
+      return (
+        <div
+          ref={component}
+          style="display: inherit; display: contents;"
+        >
+          { Component ? h(Component, attrs, context.slots) : null }
+        </div>
+      )
     }
-  }
+  },
 })
 
 export default SFormComponent

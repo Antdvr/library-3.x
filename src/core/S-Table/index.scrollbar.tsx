@@ -7,7 +7,7 @@ export const STableScrollbar = defineComponent({
   props: {
     overflow: VueTypes.string().isRequired,
     optionser: VueTypes.object().isRequired,
-    direction: VueTypes.string().isRequired
+    direction: VueTypes.string().isRequired,
   },
   setup(props) {
     const store = reactive({
@@ -16,7 +16,7 @@ export const STableScrollbar = defineComponent({
       mousedownX: 0,
       mousedownY: 0,
       scrollbarX: 0,
-      scrollbarY: 0
+      scrollbarY: 0,
     })
 
     const size = ref(8)
@@ -30,14 +30,14 @@ export const STableScrollbar = defineComponent({
           scroller: props.optionser.refTableWrapper.value,
           scrollTop: props.optionser.wrapperScrollTop.value,
           scrollLeft: props.optionser.wrapperScrollLeft.value,
-          scrollWidth: props.optionser.wrapperScrollLeft.value + props.optionser.wrapperScrollClientWidth.value + props.optionser.wrapperScrollRight.value,
-          scrollHeight: props.optionser.wrapperScrollTop.value + props.optionser.wrapperScrollClientHeight.value + props.optionser.wrapperScrollBottom.value,
+          scrollWidth: props.optionser.wrapperScrollWidth.value,
+          scrollHeight: props.optionser.wrapperScrollHeight.value,
           clientHeight: props.optionser.wrapperScrollClientHeight.value,
           clientWidth: props.optionser.wrapperScrollClientWidth.value,
           windowHeight: props.optionser.windowInnerHeight.value,
           windowWidth: props.optionser.windowInnerWidth.value,
           container: props.optionser.refTableContainer.value,
-          table: props.optionser.refTableNoder.value
+          table: props.optionser.refTableNoder.value,
         }
       }
 
@@ -45,14 +45,14 @@ export const STableScrollbar = defineComponent({
         scroller: props.optionser.resizerContainer.value,
         scrollTop: props.optionser.resizerScrollTop.value,
         scrollLeft: props.optionser.resizerScrollLeft.value,
-        scrollWidth: props.optionser.resizerScrollLeft.value + props.optionser.resizerScrollClientWidth.value + props.optionser.resizerScrollRight.value,
-        scrollHeight: props.optionser.resizerScrollTop.value + props.optionser.resizerScrollClientHeight.value + props.optionser.resizerScrollBottom.value,
+        scrollWidth: props.optionser.resizerScrollWidth.value,
+        scrollHeight: props.optionser.resizerScrollHeight.value,
         clientHeight: props.optionser.resizerScrollClientHeight.value,
         clientWidth: props.optionser.resizerScrollClientWidth.value,
         windowHeight: props.optionser.windowInnerHeight.value,
         windowWidth: props.optionser.windowInnerWidth.value,
         container: props.optionser.refTableContainer.value,
-        table: props.optionser.refTableNoder.value
+        table: props.optionser.refTableNoder.value,
       }
     })
 
@@ -78,7 +78,7 @@ export const STableScrollbar = defineComponent({
     }
 
     const scrollbarMouseDown = (event: MouseEvent) => {
-      if (Optionser.value.scroller instanceof HTMLElement) {
+      if (typeof HTMLElement !== 'undefined' && Optionser.value.scroller instanceof HTMLElement) {
         if (props.direction === 'horizontal') {
           store.activate = true
           store.scrollbarX = Optionser.value.scrollLeft / Optionser.value.scrollWidth * Optionser.value.clientWidth
@@ -102,7 +102,7 @@ export const STableScrollbar = defineComponent({
     }
 
     const scrollbarMouseMove = (event: MouseEvent) => {
-      if (!(Optionser.value.scroller instanceof HTMLElement)) {
+      if (typeof HTMLElement === 'undefined' || !(Optionser.value.scroller instanceof HTMLElement)) {
         store.activate = false
         store.scrollbarX = 0
         store.scrollbarY = 0
@@ -164,19 +164,20 @@ export const STableScrollbar = defineComponent({
         return
       }
 
-      if (!(Optionser.value.container instanceof HTMLElement)) {
+      if (typeof HTMLElement === 'undefined' || !(Optionser.value.container instanceof HTMLElement)) {
         return
       }
 
-      if (!(Optionser.value.scroller instanceof HTMLElement)) {
+      if (typeof HTMLElement === 'undefined' || !(Optionser.value.scroller instanceof HTMLElement)) {
         return
       }
 
-      if (!(Optionser.value.table instanceof HTMLElement)) {
+      if (typeof HTMLElement === 'undefined' || !(Optionser.value.table instanceof HTMLElement)) {
         return
       }
 
-      const paddingLeft = props.direction === 'vertical' && parseInt(window.getComputedStyle(Optionser.value.scroller).paddingLeft) || 0
+      const tWindow = typeof window !== 'undefined' ? window : null // Support SSR
+      const paddingLeft = props.direction === 'vertical' && parseInt(tWindow?.getComputedStyle(Optionser.value.scroller)?.paddingLeft || '0') || 0
       const scrollerRect = Optionser.value.scroller.getBoundingClientRect()
 
       const isOutsideTop = scrollerRect.top >= Optionser.value.windowHeight - 20
@@ -199,7 +200,7 @@ export const STableScrollbar = defineComponent({
           cursor: `pointer`,
           zIndex: 99999,
           bottom: 0,
-          left: 0
+          left: 0,
         })
 
         Object.assign(scrollbarStyle, {
@@ -207,7 +208,7 @@ export const STableScrollbar = defineComponent({
           width: `${(Optionser.value.clientWidth / Optionser.value.scrollWidth * Optionser.value.clientWidth).toFixed(3)}px`,
           transform: `translate(${(Optionser.value.scrollLeft / Optionser.value.scrollWidth * Optionser.value.clientWidth).toFixed(3)}px, 0)`,
           backgroundColor: `rgba(0, 0, 0, 0.5)`,
-          borderRadius: `${size.value / 2}px`
+          borderRadius: `${size.value / 2}px`,
         })
       }
 
@@ -223,7 +224,7 @@ export const STableScrollbar = defineComponent({
           cursor: `pointer`,
           zIndex: 99999,
           bottom: 0,
-          left: 0
+          left: 0,
         })
 
         Object.assign(scrollbarStyle, {
@@ -231,7 +232,7 @@ export const STableScrollbar = defineComponent({
           height: `${(Optionser.value.clientHeight / Optionser.value.scrollHeight * Optionser.value.clientHeight).toFixed(3)}px`,
           transform: `translate(0, ${(Optionser.value.scrollTop / Optionser.value.scrollHeight * Optionser.value.clientHeight).toFixed(3)}px)`,
           backgroundColor: `rgba(0, 0, 0, 0.5)`,
-          borderRadius: `${size.value / 2}px`
+          borderRadius: `${size.value / 2}px`,
         })
       }
 
@@ -254,20 +255,20 @@ export const STableScrollbar = defineComponent({
           onMousedown={containerMouseDown}
           onMouseenter={() => { size.value = 12 }}
           onMouseleave={() => { size.value = 8 }}
-          class='s-table-scrollbar-container'
+          class="s-table-scrollbar-container"
           style={containerStyle}
           ref={container}
         >
           <div
             onMousedown={scrollbarMouseDown}
-            class='s-table-scrollbar'
+            class="s-table-scrollbar"
             style={scrollbarStyle}
             ref={scrollbar}
           />
         </div>
       )
     }
-  }
+  },
 })
 
 export default STableScrollbar

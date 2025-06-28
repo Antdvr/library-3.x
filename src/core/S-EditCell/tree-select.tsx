@@ -1,13 +1,10 @@
 import './tree-select.less'
-import 'ant-design-vue/es/empty/style/index.less'
-import 'ant-design-vue/es/button/style/index.less'
-import 'ant-design-vue/es/tree-select/style/index.less'
 
 import * as VueTypes from 'vue-types'
 import SEllipsis from '../S-Ellipsis/index'
 import { CheckOutlined, EditOutlined } from '@ant-design/icons-vue'
-import { defaultConfigProvider } from 'ant-design-vue/es/config-provider'
-import { SlotsType, defineComponent, reactive, toRaw, watch, watchEffect, inject } from 'vue'
+import { SlotsType, defineComponent, reactive, toRaw, watch, watchEffect } from 'vue'
+import { useConfigContextInject } from 'ant-design-vue/es/config-provider/context'
 import { DefaultOptionType } from 'ant-design-vue/es/vc-tree-select/TreeSelect'
 import ATreeSelect from 'ant-design-vue/es/tree-select'
 import AButton from 'ant-design-vue/es/button'
@@ -33,7 +30,7 @@ export const SEditCellTreeSelect = defineComponent({
     synced: VueTypes.bool().def(false),
     opened: VueTypes.bool().def(false),
     status: VueTypes.bool().def(false),
-    tooltip: VueTypes.object<{ enable?: boolean, ellipsis?: boolean }>().def(() => ({ enable: true, ellipsis: false })),
+    tooltip: VueTypes.object<{ enable?: boolean; ellipsis?: boolean; }>().def(() => ({ enable: true, ellipsis: false })),
     disabled: VueTypes.bool().def(false),
     treeData: VueTypes.array<SEditCellTreeSelectOptionType>().def(() => ([])),
     showArrow: VueTypes.bool().def(true),
@@ -43,17 +40,18 @@ export const SEditCellTreeSelect = defineComponent({
     placeholder: VueTypes.string().def(),
     treeNodeFilterProp: VueTypes.string().def(),
     treeDefaultExpandAll: VueTypes.bool().def(true),
-    cellStyle: VueTypes.object().def(() => ({}))
+    cellStyle: VueTypes.object().def(() => ({})),
   },
   emits: {
-    'edit': (proxy: { editable: boolean, value: any }) => true,
-    'blur': (proxy: { editable: boolean, value: any }) => true,
-    'focus': (proxy: { editable: boolean, value: any }) => true,
-    'change': (proxy: { editable: boolean, value: any }) => true,
-    'confirm': (proxy: { editable: boolean, value: any }) => true,
+    'edit': (proxy: { editable: boolean; value: any; }) => true,
+    'blur': (proxy: { editable: boolean; value: any; }) => true,
+    'focus': (proxy: { editable: boolean; value: any; }) => true,
+    'change': (proxy: { editable: boolean; value: any; }) => true,
+    'confirm': (proxy: { editable: boolean; value: any; }) => true,
     'update:status': (status: boolean) => true,
-    'update:text': (text: any) => true
+    'update:text': (text: any) => true,
   },
+  slots: {} as SEditCellDefineSlots,
   setup(props, { emit, slots }) {
     const doEdit = (event: Event) => {
       proxy.editable = true
@@ -79,9 +77,7 @@ export const SEditCellTreeSelect = defineComponent({
     }
 
     const doConfirm = (event: Event) => {
-      if (!props.opened) {
-        proxy.editable = false
-      }
+      proxy.editable = false
       emit('confirm', toRaw(proxy))
       event.stopPropagation()
     }
@@ -90,10 +86,10 @@ export const SEditCellTreeSelect = defineComponent({
       if (!props.disabled && props.check) {
         return (
           <AButton
-            class='s-editable-cell-button-check'
-            type='link'
-            icon={<CheckOutlined/>}
-            style={{ color: 'var(--ant-primary-color, #1890ff)', ...props.cellStyle.check }}
+            class="s-editable-cell-button-check"
+            type="link"
+            icon={<CheckOutlined />}
+            style={{ ...props.cellStyle.check }}
             onClick={(event: Event) => doConfirm(event)}
           />
         )
@@ -105,9 +101,9 @@ export const SEditCellTreeSelect = defineComponent({
       if (!props.disabled && props.edit) {
         return (
           <AButton
-            class='s-editable-cell-button-edit'
-            type='link'
-            icon={<EditOutlined/>}
+            class="s-editable-cell-button-edit"
+            type="link"
+            icon={<EditOutlined />}
             style={props.cellStyle.edit}
           />
         )
@@ -124,9 +120,9 @@ export const SEditCellTreeSelect = defineComponent({
           >
             <ATreeSelect
               v-model={[proxy.value, 'value']}
-              class='s-editable-cell-input'
+              size={provider.componentSize?.value}
+              class="s-editable-cell-input"
               style={props.cellStyle.input}
-              size={provider.componentSize}
               treeData={props.treeData}
               showArrow={props.showArrow}
               allowClear={props.allowClear}
@@ -140,7 +136,7 @@ export const SEditCellTreeSelect = defineComponent({
               onFocus={(event: Event) => doFocus(event)}
               onBlur={(event: Event) => doBlur(event)}
             />
-            <RenderCheckButton/>
+            <RenderCheckButton />
           </div>
         )
       }
@@ -150,7 +146,7 @@ export const SEditCellTreeSelect = defineComponent({
       const fieldValue = props.fieldNames.value || 'value'
       const fieldChildren = props.fieldNames.children || 'children'
       const isPrimitive = typeof text === 'string' || typeof text === 'number'
-      const title = isPrimitive ? helper.takeLabelByKey(props.treeData, text, fieldLabel, fieldValue, fieldChildren) || props.text : undefined
+      const title = isPrimitive ? helper.takeTextByKey(props.treeData, text, fieldLabel, fieldValue, fieldChildren) || props.text : undefined
 
       return (
         <SEllipsis
@@ -164,7 +160,7 @@ export const SEditCellTreeSelect = defineComponent({
             onClick={event => !props.disabled && props.edit && doEdit(event)}
           >
             { RenderEditableCellText() }
-            <RenderEditButton/>
+            <RenderEditButton />
           </div>
         </SEllipsis>
       )
@@ -178,7 +174,7 @@ export const SEditCellTreeSelect = defineComponent({
       const isPrimitive = typeof text === 'string' || typeof text === 'number'
 
       const slotText = slots.editableCellText ? slots.editableCellText({ text: props.text, ...toRaw(proxy) }) : null
-      const cellText = slotText ?? (isPrimitive ? helper.takeLabelByKey(props.treeData, text, fieldLabel, fieldValue, fieldChildren) || props.text : props.text) as any
+      const cellText = slotText ?? (isPrimitive ? helper.takeTextByKey(props.treeData, text, fieldLabel, fieldValue, fieldChildren) || props.text : props.text) as any
       const empty = props.empty
 
       return cellText || cellText === 0
@@ -186,11 +182,11 @@ export const SEditCellTreeSelect = defineComponent({
         : empty
     }
 
-    const provider = inject('configProvider', defaultConfigProvider)
+    const provider = useConfigContextInject()
 
     const proxy = reactive({
       value: props.text,
-      editable: false
+      editable: false,
     })
 
     watchEffect(() => {
@@ -205,14 +201,13 @@ export const SEditCellTreeSelect = defineComponent({
       <div
         style={props.cellStyle.container}
         class={['s-editable-cell-container', { editabled: proxy.editable }]}
-        onDblclick={ (event: Event) => event.stopPropagation() }
-        onClick={ (event: Event) => event.stopPropagation() }
+        onDblclick={(event: Event) => event.stopPropagation()}
+        onClick={(event: Event) => event.stopPropagation()}
       >
-        <RenderEditableContainer/>
+        <RenderEditableContainer />
       </div>
     )
   },
-  slots: {} as SEditCellDefineSlots
 })
 
 export default SEditCellTreeSelect

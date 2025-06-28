@@ -1,4 +1,3 @@
-import 'ant-design-vue/es/tooltip/style/index.less'
 import { SlotsType, defineComponent, onMounted, ref } from 'vue'
 import ATooltip from 'ant-design-vue/es/tooltip'
 import * as VueTypes from 'vue-types'
@@ -11,8 +10,10 @@ type SEllipsisDefineSlots = SlotsType<{
 export const SEllipsis = defineComponent({
   name: 'SEllipsis',
   props: {
+    open: VueTypes.bool().def(undefined),
     title: VueTypes.string().def(undefined),
-    visible: VueTypes.bool().def(undefined),
+    color: VueTypes.string().def(undefined),
+    trigger: VueTypes.string<'hover' | 'focus' | 'click' | 'contextmenu'>().def('hover'),
     inspect: VueTypes.bool().def(true),
     tooltip: VueTypes.bool().def(true),
     ellipsis: VueTypes.bool().def(false),
@@ -31,18 +32,19 @@ export const SEllipsis = defineComponent({
       | 'rightBottom'
     >().def('top'),
     mouseEnterDelay: VueTypes.number().def(0.3),
-    mouseLeaveDelay: VueTypes.number().def(0.1)
+    mouseLeaveDelay: VueTypes.number().def(0.1),
   },
   emits: {
-    'update:visible': (visible: boolean) => typeof visible === 'boolean'
+    'update:open': (open: boolean) => typeof open === 'boolean',
   },
+  slots: {} as SEllipsisDefineSlots,
   setup(props, { emit, slots }) {
-    const element: any = ref(null)
-    const visible: any = ref(false)
+    const open: any = ref(false)
     const outside: any = ref(false)
+    const element: any = ref(null)
 
     const bounding = (target: any) => {
-      if (target instanceof HTMLElement) {
+      if (typeof HTMLElement !== 'undefined' && target instanceof HTMLElement) {
         const clientHeight = target.getBoundingClientRect().height
         const clientWidth = target.getBoundingClientRect().width
         const outHeight = target.scrollHeight > clientHeight + 1
@@ -54,17 +56,17 @@ export const SEllipsis = defineComponent({
 
     const updateVisible = (state: boolean) => {
       return state === true && props.inspect === true
-        ? (visible.value = bounding(element.value))
-        : (visible.value = state)
+        ? (open.value = bounding(element.value))
+        : (open.value = state)
     }
 
-    const observer = new ResizeObserver(entries => {
-      for (const entry of entries) {
-        bounding(entry.target)
-      }
-    })
-
     onMounted(() => {
+      const observer = new ResizeObserver(entries => {
+        for (const entry of entries) {
+          bounding(entry.target)
+        }
+      })
+
       if (element.value instanceof HTMLElement) {
         observer.observe(element.value)
         bounding(element.value)
@@ -75,15 +77,15 @@ export const SEllipsis = defineComponent({
       if (props.tooltip === true) {
         const binds = {
           ...props,
-          'visible': props.visible !== undefined ? props.visible : visible.value,
-          'onUpdate:visible': undefined,
-          'onVisibleChange': undefined
+          'open': props.open !== undefined ? props.open : open.value,
+          'onUpdate:open': undefined,
+          'onVisibleChange': undefined,
         }
 
         return (
           <ATooltip
-            { ...binds }
-            { ...{ 'onUpdate:visible': (visible: boolean) => emit('update:visible', updateVisible(visible)) } }
+            {...binds}
+            {...{ 'onUpdate:open': (open: boolean) => emit('update:open', updateVisible(open)) }}
             v-slots={{ title: slots.title || slots.default }}
           >
             <div
@@ -94,7 +96,7 @@ export const SEllipsis = defineComponent({
                 display: 'block',
                 whiteSpace: props.ellipsis === true ? 'nowrap' : 'inherit',
                 textOverflow: outside.value && props.ellipsis === true ? 'ellipsis' : 'initial',
-                overflow: outside.value && props.ellipsis === true ? 'hidden' : 'visible'
+                overflow: outside.value && props.ellipsis === true ? 'hidden' : 'visible',
               }}
             >
               { slots.default?.() }
@@ -106,7 +108,6 @@ export const SEllipsis = defineComponent({
       return slots.default?.()
     }
   },
-  slots: {} as SEllipsisDefineSlots
 })
 
 export default SEllipsis

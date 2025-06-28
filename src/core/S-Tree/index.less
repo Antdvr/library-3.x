@@ -1,12 +1,12 @@
 .s-tree-container {
-  --bg-color: 'transparent';
+  --tree-background-color: 'transparent';
 }
 
 .s-tree-container {
   width: 100%;
   height: 100%;
   position: relative;
-  background-color: var(--bg-color, 'transparent');
+  background-color: var(--tree-background-color, 'transparent');
 
   .ant-spin-container,
   .ant-spin-nested-loading {
@@ -19,10 +19,11 @@
   .ant-spin-container,
   .ant-spin-nested-loading,
   .ant-tree-node-content-wrapper {
-    background-color: var(--bg-color, 'transparent');
+    background-color: var(--tree-background-color, 'transparent');
   }
 
   .ant-tree-switcher {
+    height: 24px;
     background-color: transparent;
 
     // fix boundary
@@ -36,7 +37,9 @@
   }
 
   .ant-tree-checkbox {
-    margin: 4px 6px 0 0;
+    margin: 0 6px 0 0;
+    margin-inline-end: 6px;
+    margin-block-start: 0;
   }
 
   .ant-tree {
@@ -55,14 +58,6 @@
       line-height: 24px;
       vertical-align: middle;
       flex: 1 1 auto;
-
-      .normal {
-        color: inherit;
-      }
-
-      .primary {
-        color: var(--ant-primary-color, #1890ff);
-      }
     }
 
     .s-tree-title-node .s-tree-title-button {
@@ -122,6 +117,18 @@
       width: 100%;
       display: flex;
       flex: 1 1 auto;
+    }
+
+    .ant-tree-node-content-wrapper .ant-tree-iconEle {
+      flex: 0 0 auto;
+      padding-right: 5px;
+      margin-left: -4px;
+    }
+
+    .ant-tree-checkbox + span .ant-tree-iconEle {
+      flex: 0 0 auto;
+      padding-right: 5px;
+      margin-left: -4px;
     }
 
     .ant-tree-list-holder-inner {
