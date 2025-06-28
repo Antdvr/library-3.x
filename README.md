@@ -22,8 +22,8 @@
 <br/>
 
 ```bash
-pnpm add @antdvr/library-3.x@^4.0.0
-pnpm add @antdvr/eslint-config@^4.0.0
+pnpm add @antdvr/library-3.x@^4.0.1
+pnpm add @antdvr/eslint-config-3.x@^4.0.1
 ```
 
 </details>
@@ -51,10 +51,10 @@ pnpm add @antdvr/library-3.x@^3.0.0
 
 ```typescript
 import App from "./App.vue"
-import AntdComponentPlugin from "@antdvr/library-3.x"
+import ComponentPlugin from "@antdvr/library-3.x"
 
 createApp(App)
-  .use(AntdComponentPlugin)
+  .use(ComponentPlugin)
   .mount("#app")
 ```
 
@@ -140,7 +140,7 @@ export default defineConfig(() => {
 <br/>
 
 <details open>
-<summary>ESlint: `@antdvr/eslint-config`</summary>
+<summary>ESlint: `@antdvr/eslint-config-3.x`</summary>
 <br/>
 
 ```typescript
@@ -149,7 +149,7 @@ import tseslint from "typescript-eslint";
 import vueParser from "vue-eslint-parser";
 import pluginVue from "eslint-plugin-vue";
 import stylistic from "@stylistic/eslint-plugin";
-import antdvr from "@antdvr/eslint-config";
+import antdvr from "@antdvr/eslint-config-3.x";
 
 const flatArray = (options) => {
   return !Array.isArray(options) ? [options] : options;
