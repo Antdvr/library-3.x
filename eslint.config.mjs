@@ -30,8 +30,8 @@ export default tseslint.config(
     extends: [
       ...flatArray(eslint.configs.recommended),
       ...flatArray(tseslint.configs.recommended),
+      ...flatArray(stylistic.configs['recommended']),
       ...flatArray(pluginVue.configs['flat/recommended']),
-      ...flatArray(stylistic.configs['recommended-flat']),
     ],
     languageOptions: {
       parser: vueParser,

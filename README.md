@@ -22,8 +22,8 @@
 <br/>
 
 ```bash
-pnpm add @antdvr/library-3.x@^4.0.1
-pnpm add @antdvr/eslint-config-3.x@^4.0.1
+pnpm add @antdvr/library-3.x@^4.1.0
+pnpm add @antdvr/eslint-config-3.x@^4.1.0
 ```
 
 </details>
@@ -159,7 +159,7 @@ export default tseslint.config({
   extends: [
     ...flatArray(eslint.configs.recommended),
     ...flatArray(tseslint.configs.recommended),
-    ...flatArray(stylistic.configs["recommended-flat"]),
+    ...flatArray(stylistic.configs["recommended"]),
     ...flatArray(pluginVue.configs["flat/recommended"]),
     ...flatArray(antdvr.configs["flat/recommended"]),
   ],
