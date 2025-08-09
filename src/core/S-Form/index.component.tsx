@@ -3,8 +3,9 @@ import './index.component.less'
 import * as VueTypes from 'vue-types'
 import { SFormType } from './form.declare'
 import { defineComponent } from 'vue'
+import { useTemplateRef } from 'vue'
 import { nextTick } from 'vue'
-import { ref, h } from 'vue'
+import { h } from 'vue'
 
 import ARate from 'ant-design-vue/es/rate'
 import ARadio from 'ant-design-vue/es/radio'
@@ -56,6 +57,8 @@ export const SFormComponent = defineComponent({
     attrs: VueTypes.object().isRequired,
   },
   setup(props, context) {
+    const component = useTemplateRef<HTMLElement>('component')
+
     return () => {
       const type = props.type
       const field = props.field
@@ -63,7 +66,6 @@ export const SFormComponent = defineComponent({
       const disabled = props.disabled
       const readonly = props.readonly
       const Component = AComponents[type]
-      const component = ref(null as HTMLElement | null)
 
       let attrs: any = {}
 
@@ -152,7 +154,7 @@ export const SFormComponent = defineComponent({
 
       return (
         <div
-          ref={component}
+          ref="component"
           style="display: inherit; display: contents;"
         >
           { Component ? h(Component, attrs, context.slots) : null }
