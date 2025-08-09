@@ -1,4 +1,4 @@
-import { defineComponent, onMounted, onUnmounted, nextTick, watch, ref } from 'vue'
+import { defineComponent, onMounted, onUnmounted, useTemplateRef, nextTick, watch, ref } from 'vue'
 import { SettingOutlined } from '@ant-design/icons-vue'
 import ATheme from 'ant-design-vue/es/theme'
 import * as VueTypes from 'vue-types'
@@ -37,12 +37,13 @@ export const STableSettings = defineComponent({
   setup(props, context) {
     const visible = ref(false)
     const token = ATheme.useToken().token
-    const overlay = ref(null as HTMLElement | null)
     const checkedKeys = ref(props.checkedKeys)
     const expandedKeys = ref(props.expandedKeys)
-    const closer = () => { visible.value = false }
-    const stoper = (event: Event) => { event.stopPropagation() }
+    const overlay = useTemplateRef<HTMLElement>('overlay')
+
     const toggler = (event: Event) => { visible.value = !visible.value; event.stopPropagation() }
+    const stoper = (event: Event) => { event.stopPropagation() }
+    const closer = () => { visible.value = false }
 
     onMounted(() => { document.body.addEventListener('click', closer) })
     onUnmounted(() => { document.body.removeEventListener('click', closer) })
@@ -67,7 +68,7 @@ export const STableSettings = defineComponent({
 
         return (
           <div
-            ref={overlay}
+            ref="overlay"
             class="s-table-settings-overlay"
             onMouseleave={closer}
             onClick={stoper}

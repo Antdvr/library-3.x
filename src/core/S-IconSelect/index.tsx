@@ -1,6 +1,6 @@
 import * as VueTypes from 'vue-types'
 import { SIconSelectOption } from './type'
-import { defineComponent, watchEffect, ref, Ref } from 'vue'
+import { defineComponent, useTemplateRef, watchEffect, ref, Ref } from 'vue'
 import { useConfigContextInject } from 'ant-design-vue/es/config-provider/context'
 import ASelect from 'ant-design-vue/es/select'
 
@@ -85,7 +85,7 @@ export const SIconSelect = defineComponent({
     }
 
     const open = ref<any>(undefined)
-    const selector = ref<any>(undefined)
+    const selector = useTemplateRef<any>('selector')
     const iconOptions = ref<SIconSelectOption[]>([])
     const isMultipleMode = props.mode === 'tags' || props.mode === 'multiple'
     const isMultiple = props.multiple !== false
@@ -127,7 +127,7 @@ export const SIconSelect = defineComponent({
 
       return (
         <ASelect
-          ref={selector}
+          ref="selector"
           open={open.value}
           size={props.size || provider.componentSize?.value}
           mode={props.mode}

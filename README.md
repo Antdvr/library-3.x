@@ -22,8 +22,8 @@
 <br/>
 
 ```bash
-pnpm add @antdvr/library-3.x@^4.1.0
-pnpm add @antdvr/eslint-config-3.x@^4.1.0
+pnpm add @antdvr/library-3.x@^4.2.0
+pnpm add @antdvr/eslint-config-3.x@^4.2.0
 ```
 
 </details>

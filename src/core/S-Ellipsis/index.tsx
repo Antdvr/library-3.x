@@ -1,4 +1,4 @@
-import { SlotsType, defineComponent, onMounted, ref } from 'vue'
+import { SlotsType, defineComponent, onMounted, useTemplateRef, ref } from 'vue'
 import ATooltip from 'ant-design-vue/es/tooltip'
 import * as VueTypes from 'vue-types'
 
@@ -39,9 +39,9 @@ export const SEllipsis = defineComponent({
   },
   slots: {} as SEllipsisDefineSlots,
   setup(props, { emit, slots }) {
-    const open: any = ref(false)
-    const outside: any = ref(false)
-    const element: any = ref(null)
+    const open = ref(false)
+    const outside = ref(false)
+    const element = useTemplateRef<HTMLElement>('element')
 
     const bounding = (target: any) => {
       if (typeof HTMLElement !== 'undefined' && target instanceof HTMLElement) {
@@ -89,7 +89,7 @@ export const SEllipsis = defineComponent({
             v-slots={{ title: slots.title || slots.default }}
           >
             <div
-              ref={element}
+              ref="element"
               style={{
                 width: '100%',
                 height: '100%',

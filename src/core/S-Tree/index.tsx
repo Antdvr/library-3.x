@@ -1,7 +1,8 @@
 import './index.less'
 
 import * as VueTypes from 'vue-types'
-import { shallowReactive, defineComponent, shallowRef, watch, onMounted, toRaw, unref, ref, renderSlot, Fragment } from 'vue'
+import { shallowReactive, defineComponent, onMounted, renderSlot, Fragment } from 'vue'
+import { useTemplateRef, shallowRef, toRaw, watch, unref, ref } from 'vue'
 import { Key } from 'ant-design-vue/es/vc-tree/interface'
 import SIcon, { isIconType } from '@/S-Icon/index'
 import SEllipsis from '@/S-Ellipsis/index'
@@ -103,7 +104,7 @@ export const STree = defineComponent({
       checkedKeys: shallowReactive([]),
       selectedKeys: shallowReactive([]),
       expandedKeys: shallowReactive([]),
-      treeContainer: shallowRef(null),
+      treeContainer: useTemplateRef('treeContainer'),
     }
 
     const Stater: STreeStater = {
@@ -2467,7 +2468,7 @@ export const STree = defineComponent({
 
       return (
         <section
-          ref={Cacher.treeContainer}
+          ref="treeContainer"
           class={[...propClass, 's-tree-container']}
           style={propStyle}
         >

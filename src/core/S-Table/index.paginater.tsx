@@ -1,5 +1,5 @@
 import Pagination from 'ant-design-vue/es/pagination'
-import { defineComponent, ref } from 'vue'
+import { defineComponent } from 'vue'
 import * as VueTypes from 'vue-types'
 
 export const STablePaginate = defineComponent({
@@ -33,13 +33,11 @@ export const STablePaginate = defineComponent({
       context.emit('pageChange', current, size)
     }
 
-    const container = ref(null as HTMLElement | null)
     const style: any = context.attrs.style
 
     return () => {
       return (
         <div
-          ref={container}
           class="s-table-paginate-container"
           style={style}
         >

@@ -1,4 +1,4 @@
-import { computed, defineComponent, reactive, ref, Ref } from 'vue'
+import { computed, defineComponent, useTemplateRef, reactive, ref } from 'vue'
 import * as VueTypes from 'vue-types'
 
 export const STableScrollbar = defineComponent({
@@ -21,8 +21,8 @@ export const STableScrollbar = defineComponent({
 
     const size = ref(8)
     const listened = ref(false)
-    const container = ref(null) as Ref<HTMLElement | null>
-    const scrollbar = ref(null) as Ref<HTMLElement | null>
+    const container = useTemplateRef<HTMLElement>('container')
+    const scrollbar = useTemplateRef<HTMLElement>('scrollbar')
 
     const Optionser = computed(() => {
       if (props.overflow === 'auto') {
@@ -257,13 +257,13 @@ export const STableScrollbar = defineComponent({
           onMouseleave={() => { size.value = 8 }}
           class="s-table-scrollbar-container"
           style={containerStyle}
-          ref={container}
+          ref="container"
         >
           <div
             onMousedown={scrollbarMouseDown}
             class="s-table-scrollbar"
             style={scrollbarStyle}
-            ref={scrollbar}
+            ref="scrollbar"
           />
         </div>
       )

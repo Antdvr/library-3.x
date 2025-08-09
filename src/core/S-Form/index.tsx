@@ -5,7 +5,7 @@ import Normalize from './form.normalize'
 import SFormComponent from './index.component'
 import { SFormValidatorRule } from './form.declare'
 import { SFormGrid, SFormColItem, SFormColPartItem, SFormColSlotItem, SFormRowItem, SFormRowPartItem, SFormRowSlotItem, SFormGroupItem, SFormGroupPartItem, SFormGroupSlotItem } from './form.declare'
-import { SlotsType, Ref, defineComponent, watchEffect, watch, shallowRef, toRaw, unref, ref, readonly, PropType } from 'vue'
+import { SlotsType, Ref, defineComponent, useTemplateRef, watchEffect, watch, shallowRef, toRaw, unref, ref, readonly, PropType } from 'vue'
 import { Rule, NamePath, InternalNamePath, ValidateOptions } from 'ant-design-vue/es/form/interface'
 import { useConfigContextInject } from 'ant-design-vue/es/config-provider/context'
 import AForm, { FormItem as AFormItem } from 'ant-design-vue/es/form'
@@ -288,8 +288,8 @@ export const SForm = defineComponent({
       }
     }
 
-    const form: any = ref(null)
-    const first: Ref<boolean> = ref(true)
+    const form: any = useTemplateRef('form')
+    const first: Ref<boolean> = ref(true) as Ref<boolean>
     const rawItems = shallowRef([] as Array<SFormColItem>)
     const rawModel = shallowRef({} as Record<string, any>)
     const refModel: Ref<Record<string, any>> = ref({})
@@ -530,7 +530,7 @@ export const SForm = defineComponent({
               v-slots={context.slots}
               model={refModel.value}
               rules={props.rules}
-              ref={form}
+              ref="form"
             >
               { context.slots.before?.() }
 

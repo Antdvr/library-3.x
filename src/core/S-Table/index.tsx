@@ -1,6 +1,6 @@
 import './index.style.less'
 
-import { Fragment, VNode, HTMLAttributes, UnwrapRef, Ref, isVNode, nextTick, renderSlot, defineComponent, onMounted, computed, reactive, ref, watch, toRaw, unref } from 'vue'
+import { Fragment, VNode, HTMLAttributes, UnwrapRef, Ref, isVNode, nextTick, renderSlot, defineComponent, onMounted, useTemplateRef, computed, reactive, watch, toRaw, unref, ref } from 'vue'
 import { useConfigContextInject } from 'ant-design-vue/es/config-provider/context'
 import { PlusOutlined, MinusOutlined } from '@ant-design/icons-vue'
 import { TinyColor } from '@ctrl/tinycolor'
@@ -171,10 +171,10 @@ export const STable = defineComponent({
 
     const Optionser = {
       // reference
-      refTableNoder: ref(null) as Ref<HTMLElement | null>,
-      refTableTheader: ref(null) as Ref<HTMLElement | null>,
-      refTableWrapper: ref(null) as Ref<HTMLElement | null>,
-      refTableContainer: ref(null) as Ref<HTMLElement | null>,
+      refTableNoder: useTemplateRef<HTMLElement>('refTableNoder'),
+      refTableTheader: useTemplateRef<HTMLElement>('refTableTheader'),
+      refTableWrapper: useTemplateRef<HTMLElement>('refTableWrapper'),
+      refTableContainer: useTemplateRef<HTMLElement>('refTableContainer'),
       tableTheadSizes: ref([]) as Ref<Array<STableCellSizesType>>,
       windowInnerWidth: ref(0),
       windowInnerHeight: ref(0),
@@ -2945,7 +2945,7 @@ export const STable = defineComponent({
 
         return (
           <thead
-            ref={Optionser.refTableTheader}
+            ref="refTableTheader"
             class={['s-table-thead', { 's-border-table': ([] as any).concat(props.border).includes('thead') }]}
             style={style}
           >
@@ -4346,14 +4346,14 @@ export const STable = defineComponent({
 
       return (
         <div
-          ref={Optionser.refTableWrapper}
+          ref="refTableWrapper"
           class="s-nested-table-wrapper"
           style={WrapperScollerStyle} // @ts-ignore
           onScrollPassive={Eventer.updateWrapperContainer}
           onMousedown={WrapperMousedown}
         >
           <table
-            ref={Optionser.refTableNoder}
+            ref="refTableNoder"
             class={['s-nested-table', WrapperTableClass]}
             style={WrapperTableStyle}
           >
@@ -4478,7 +4478,7 @@ export const STable = defineComponent({
 
       return (
         <section
-          ref={Optionser.refTableContainer}
+          ref="refTableContainer"
           style={{ ...refTableContainerStyle, ...refTableVariablerStyle }}
           class={['s-table-container', `s-${Normalizer.size.value}-table-container`]}
         >
